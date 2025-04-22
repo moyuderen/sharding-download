@@ -94,4 +94,3 @@ export const getBody = async (response) => {
     return response
   }
 }
-
