@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quick Start</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios@0.24.0/dist/axios.min.js"></script>
+  </head>
+  <body>
+    <script type="module" src="quick-start.js"></script>
+    
+    <div id="app">
+      <img
+        id="image"
+        width="300"
+        height="300"
+      />
+      <button @click="hanldeDownload()">Satrt download</button>
+      <div>
+        <div v-for="(task, index) in downloadFileList" :key="task.index" @click="openFile(task)">
+          <span>{{ task.name }}</span>
+          <span>{{ task.status }}</span>
+          <span>{{ task.progress }}%</span>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
