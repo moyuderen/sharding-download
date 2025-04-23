@@ -1,12 +1,14 @@
 import { ChunkStatus } from './constants.js'
 
 class Chunk {
-  constructor(options) {
+  constructor(index, parent, options) {
+    this.index = index
+    this.parent = parent
     this.options = options
+
     this.action = options.action
     this.url = options.url
-    this.fileSize = options.fileSize
-    this.index = options.index
+    this.fileSize = parent.size
     this.chunkSize = options.chunkSize
     this.stardByte = this.chunkSize * this.index
     this.endByte = Math.min(this.stardByte + this.chunkSize - 1, this.fileSize - 1)
@@ -18,6 +20,7 @@ class Chunk {
     this.requestSucceed = options.requestSucceed
     this.request = null
     this.timer = null
+    this.progress = 0
   }
 
   async send() {
@@ -61,6 +64,8 @@ class Chunk {
         },
         onFail: (e) => onFail(e, reject),
         onProgress: (e) => {
+          this.progress = Math.min(Math.max(e.loaded / e.total, this.progress), 1)
+          this.parent.updateProgress()
           this.status = ChunkStatus.Downloading
         }
       })

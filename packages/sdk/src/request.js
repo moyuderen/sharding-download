@@ -31,7 +31,10 @@ export default function request(options) {
 
   xhr.setRequestHeader('content-type', 'application/json;charset=UTF-8')
 
-  xhr.addEventListener('progress', onProgress)
+  xhr.onprogress = function (event) {
+    onProgress(event)
+  }
+
   xhr.onload = function onload() {
     if (xhr.status < 200 || xhr.status >= 300) {
       onFail(xhr)
@@ -41,10 +44,10 @@ export default function request(options) {
       data: xhr.response,
       status: xhr.status,
       headers: {
-        'Content-Type': xhr.getResponseHeader('Content-Type'),
-        'Content-Range': xhr.getResponseHeader('Content-Range'),
-        'Content-Disposition': xhr.getResponseHeader('Content-Disposition'),
-        Etag: xhr.getResponseHeader('Etag')
+        'content-type': xhr.getResponseHeader('content-type'),
+        'content-range': xhr.getResponseHeader('content-range'),
+        'content-disposition': xhr.getResponseHeader('content-disposition'),
+        etag: xhr.getResponseHeader('Etag')
       }
     })
   }

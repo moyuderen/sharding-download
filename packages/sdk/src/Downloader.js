@@ -29,7 +29,6 @@ class Downloader {
     this.action = this.options.action
     this.chunkSize = this.options.chunkSize
     this.threads = this.options.threads
-    this.clearSameName = this.options.clearSameName
     this.request = this.options.customRequest
     this.isPart = this.options.isPart
     this.downloadingChunks = new Set()
@@ -48,6 +47,7 @@ class Downloader {
 
   async start(url) {
     if (!url || !this.action) {
+      this.emit(Callbacks.Fail, null, this.fileList)
       throw new Error('url or action is required')
     }
 
@@ -78,7 +78,7 @@ class Downloader {
           this.emit(Callbacks.Error)
           return
         }
-        const contentDisposition = headers['Content-Disposition']
+        const contentDisposition = headers['content-disposition']
         const index = contentDisposition.lastIndexOf("'")
         const url = URL.createObjectURL(data)
         file.name = contentDisposition.substr(index + 1)
@@ -119,12 +119,18 @@ class Downloader {
             reject(new Error('Request failed'))
             return
           }
-          const contentDisposition = headers['Content-Disposition']
-          const index = contentDisposition.lastIndexOf("'")
-          const name = contentDisposition.substr(index + 1)
-          const size = Number(headers['Content-Range'].split('/')[1])
-          const etag = headers['Etag']
-          resolve({ name, size, etag })
+
+          try {
+            const contentDisposition = headers['content-disposition'] || ''
+            const index = contentDisposition.lastIndexOf('fileName=')
+            const name = contentDisposition.substr(index + 9)
+            const size = Number(headers['content-range'].split('/')[1])
+            const etag = headers['etag']
+            resolve({ name, size, etag })
+          } catch (e) {
+            console.error('Error parsing response headers:', e)
+            reject(new Error('Failed to parse response headers'))
+          }
         },
         onFail: (e) => {
           reject(e)
@@ -134,24 +140,26 @@ class Downloader {
   }
 
   async creatFile(url) {
-    const { name, size, etag } = await this.getMeta(url)
-    const file = new File(
-      {
-        id: id++,
-        name,
-        size,
-        etag,
-        chunkSize: this.chunkSize,
-        threads: this.threads,
-        action: this.action,
-        storage: this.storage,
-        url
-      },
-      this
-    )
+    try {
+      const { name, size, etag } = await this.getMeta(url)
+      const file = new File(
+        {
+          ...this.options,
+          id: id++,
+          name,
+          size,
+          etag,
+          url
+        },
+        this
+      )
 
-    this.fileList.push(file)
-    file.start()
+      this.fileList.push(file)
+      file.start()
+    } catch (e) {
+      console.error('Error getting file metadata:', e)
+      this.emit(Callbacks.Fail, null, this.fileList)
+    }
   }
 }
 

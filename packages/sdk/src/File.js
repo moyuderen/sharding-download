@@ -6,8 +6,9 @@ class File {
   constructor(options, downloader) {
     this.options = options
     this.downloader = downloader
+
     this.id = options.id
-    this.storage = options.storage
+    this.storage = downloader.storage
     this.name = options.name
     this.size = options.size
     this.etag = options.etag
@@ -54,7 +55,8 @@ class File {
         const existing = await this.storage.checkChunk(this.etag, chunk.index)
 
         if (this.downloaded.has(chunk.index) && existing) {
-          this.updateProgress()
+          chunk.progress = 1
+          this.updateProgress(1, chunk)
           return chunk
         }
 
@@ -62,6 +64,7 @@ class File {
           if (existing) {
             this.downloaded.add(chunk.index)
             await this.storage.updateMetadata(this, [...this.downloaded])
+            chunk.progress = 1
             this.updateProgress()
             return chunk
           }
@@ -73,7 +76,6 @@ class File {
           await this.storage.saveChunk(this.etag, chunk.index, chunk.size, data)
           this.downloaded.add(chunk.index)
           await this.storage.updateMetadata(this, [...this.downloaded])
-          this.updateProgress()
           data = null
           return chunk
         } catch (error) {
@@ -91,13 +93,18 @@ class File {
   }
 
   updateProgress() {
-    this.progress = this.downloaded.size / this.totalChunks
+    const progress = this.chunks.reduce((total, chunk) => {
+      return (total += chunk.progress * (chunk.size / this.size))
+    }, 0)
+
+    this.progress = Math.min(1, progress)
+
     this.changeStatus(FileStatus.Downloading)
     this.downloader.emit(Callbacks.Progress, this)
   }
 
   async mergeFilePart() {
-    this.updateProgress()
+    this.progress = 1
     let chunks = await this.storage.getChunks(this.etag)
     chunks.sort((a, b) => a.chunkIndex - b.chunkIndex)
     console.log(`${this.name} AllChunks: `, chunks, this)
@@ -116,19 +123,7 @@ class File {
   createChunks() {
     this.totalChunks = Math.ceil(this.size / this.chunkSize)
     for (let i = 0; i < this.totalChunks; i++) {
-      this.chunks.push(
-        new Chunk({
-          index: i,
-          fileSize: this.size,
-          chunkSize: this.chunkSize,
-          action: this.action,
-          url: this.url,
-          customRequest: this.downloader.request,
-          maxRetries: this.downloader.options.maxRetries,
-          retryInterval: this.downloader.options.retryInterval,
-          requestSucceed: this.downloader.options.requestSucceed
-        })
-      )
+      this.chunks.push(new Chunk(i, this, this.options))
     }
   }
 
