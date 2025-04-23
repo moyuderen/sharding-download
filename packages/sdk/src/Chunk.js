@@ -1,4 +1,5 @@
 import { ChunkStatus } from './constants.js'
+import { throttle } from './utils.js'
 
 class Chunk {
   constructor(index, parent, options) {
@@ -22,6 +23,16 @@ class Chunk {
     this.timer = null
     this.progress = 0
     this.loaded = 0
+  }
+
+  progressleHandle(e) {
+    const updateProgress = (e) => {
+      this.loaded = e.loaded
+      this.progress = Math.min(Math.max(e.loaded / e.total, this.progress), 1)
+      this.parent.updateProgress()
+      this.status = ChunkStatus.Downloading
+    }
+    return throttle(() => updateProgress(e), 10000)
   }
 
   async send() {
@@ -48,6 +59,14 @@ class Chunk {
       reject(e)
     }
     return new Promise((resolve, reject) => {
+      const updateProgress = (e) => {
+        this.loaded = e.loaded
+        this.progress = Math.min(Math.max(e.loaded / e.total, this.progress), 1)
+        this.parent.updateProgress()
+        this.status = ChunkStatus.Downloading
+      }
+      const progressleHandle = throttle(updateProgress, 200)
+
       this.request = this.customRequest({
         action: this.action + '?index=' + this.index,
         data: { url: this.url, index: this.index },
@@ -65,10 +84,7 @@ class Chunk {
         },
         onFail: (e) => onFail(e, reject),
         onProgress: (e) => {
-          this.loaded = e.loaded
-          this.progress = Math.min(Math.max(e.loaded / e.total, this.progress), 1)
-          this.parent.updateProgress()
-          this.status = ChunkStatus.Downloading
+          progressleHandle(e)
         }
       })
 
