@@ -35,7 +35,7 @@ Vue.createApp({
     const hanldeDownload = async () => {
       document.querySelector('#image').src = ''
       // 711.jpg Discord.dmg book.pdf
-      downloader.start('711.jpg')
+      downloader.start('book.pdf')
     }
 
     const openFile = async (file) => {

@@ -21,6 +21,7 @@ class Chunk {
     this.request = null
     this.timer = null
     this.progress = 0
+    this.loaded = 0
   }
 
   async send() {
@@ -59,11 +60,12 @@ class Chunk {
             onFail(new Error('Request failed'), reject)
             return
           }
-          this.status = ChunkStatus.Downloaded
+          this.changeSuccess()
           resolve(data)
         },
         onFail: (e) => onFail(e, reject),
         onProgress: (e) => {
+          this.loaded = e.loaded
           this.progress = Math.min(Math.max(e.loaded / e.total, this.progress), 1)
           this.parent.updateProgress()
           this.status = ChunkStatus.Downloading
@@ -86,6 +88,12 @@ class Chunk {
       clearTimeout(this.timer)
       this.timer = null
     }
+  }
+
+  changeSuccess() {
+    this.status = ChunkStatus.Downloaded
+    this.loaded = this.size
+    this.progress = 1
   }
 }
 

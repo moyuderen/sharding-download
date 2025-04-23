@@ -1,5 +1,5 @@
 import Chunk from './Chunk'
-import { asyncPool } from './utils'
+import { asyncPool, renderSize } from './utils'
 import { FileStatus, Callbacks } from './constants.js'
 
 class File {
@@ -20,11 +20,20 @@ class File {
     this.link = ''
 
     this.progress = 0
+    this.loadedSize = 0
     this.chunks = []
     this.totalChunks = 0
     this.downloaded = new Set()
 
     this.createChunks()
+  }
+
+  get renderSize() {
+    return renderSize(this.size)
+  }
+
+  get renderLoadedSize() {
+    return renderSize(this.loadedSize)
   }
 
   changeStatus(newStatus) {
@@ -55,7 +64,7 @@ class File {
         const existing = await this.storage.checkChunk(this.etag, chunk.index)
 
         if (this.downloaded.has(chunk.index) && existing) {
-          chunk.progress = 1
+          chunk.changeSuccess()
           this.updateProgress(1, chunk)
           return chunk
         }
@@ -64,7 +73,7 @@ class File {
           if (existing) {
             this.downloaded.add(chunk.index)
             await this.storage.updateMetadata(this, [...this.downloaded])
-            chunk.progress = 1
+            chunk.changeSuccess()
             this.updateProgress()
             return chunk
           }
@@ -93,11 +102,22 @@ class File {
   }
 
   updateProgress() {
-    const progress = this.chunks.reduce((total, chunk) => {
-      return (total += chunk.progress * (chunk.size / this.size))
-    }, 0)
+    const progressInfo = this.chunks.reduce(
+      (info, chunk) => {
+        info.progress += chunk.progress * (chunk.size / this.size)
+        info.loadedSize += chunk.loaded
+        return info
+      },
+      {
+        loadedSize: 0,
+        progress: 0
+      }
+    )
+
+    const { loadedSize, progress } = progressInfo
 
     this.progress = Math.min(1, progress)
+    this.loadedSize = Math.min(this.size, loadedSize)
 
     this.changeStatus(FileStatus.Downloading)
     this.downloader.emit(Callbacks.Progress, this)
@@ -105,6 +125,7 @@ class File {
 
   async mergeFilePart() {
     this.progress = 1
+    this.loadedSize = this.size
     let chunks = await this.storage.getChunks(this.etag)
     chunks.sort((a, b) => a.chunkIndex - b.chunkIndex)
     console.log(`${this.name} AllChunks: `, chunks, this)
@@ -113,11 +134,15 @@ class File {
       { type: chunks[0].data.type }
     )
     chunks = []
-    const url = URL.createObjectURL(blob)
+    const url = window.URL.createObjectURL(blob)
     this.link = url
     this.changeStatus(FileStatus.Success)
     this.downloader.emit(Callbacks.Success, this)
     this.storage.cleanupFileData(this.etag)
+    const timer = setTimeout(() => {
+      clearTimeout(timer)
+      window.URL.revokeObjectURL(url)
+    }, 1000)
   }
 
   createChunks() {

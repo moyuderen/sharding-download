@@ -21,7 +21,8 @@
         <div v-for="(task, index) in downloadFileList" :key="task.index" @click="openFile(task)">
           <span>{{ task.name }}</span>
           <span>{{ task.status }}</span>
-          <span>{{ task.progress }}%</span>
+          <span>{{ (task.progress * 100).toFixed(2) }}%</span>
+          <span>{{ task.renderLoadedSize }} / {{task.renderSize}}</span>
         </div>
       </div>
     </div>

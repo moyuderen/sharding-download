@@ -2,7 +2,7 @@ import request from './request.js'
 import File from './File.js'
 import Storage from './storage/Storage.js'
 import Event from './Event.js'
-import { getBody } from './utils.js'
+import { getBody, getFilenameFromDisposition } from './utils.js'
 import { Callbacks, FileStatus } from './constants.js'
 
 let id = 0
@@ -78,11 +78,8 @@ class Downloader {
           this.emit(Callbacks.Error)
           return
         }
-        const contentDisposition = headers['content-disposition']
-        const index = contentDisposition.lastIndexOf("'")
-        const url = URL.createObjectURL(data)
-        file.name = contentDisposition.substr(index + 1)
-        file.link = url
+        file.name = getFilenameFromDisposition(headers['content-disposition'])
+        file.link = URL.createObjectURL(data)
         this.emit(Callbacks.Success, file, this.fileList)
         changeStatus(FileStatus.Success)
       },
@@ -121,9 +118,7 @@ class Downloader {
           }
 
           try {
-            const contentDisposition = headers['content-disposition'] || ''
-            const index = contentDisposition.lastIndexOf('fileName=')
-            const name = contentDisposition.substr(index + 9)
+            const name = getFilenameFromDisposition(headers['content-disposition'] || '')
             const size = Number(headers['content-range'].split('/')[1])
             const etag = headers['etag']
             resolve({ name, size, etag })
