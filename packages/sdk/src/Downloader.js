@@ -55,20 +55,29 @@ class Downloader {
     this.isPart ? this.partDownload(url) : this.fullDownload(url)
   }
 
-  fullDownload(url) {
-    const file = {
-      id: id++,
-      name: '',
-      status: FileStatus.Ready
-    }
-
+  async fullDownload(url) {
+    let file
     const changeStatus = (status) => {
       file.status = status
       this.emit(Callbacks.Change, file, this.fileList)
     }
 
-    changeStatus(FileStatus.Ready)
-    this.fileList.push(file)
+    try {
+      const { name, size } = await this.getMeta(url)
+      file = {
+        id: id++,
+        name,
+        size,
+        progress: 0,
+        status: FileStatus.Ready
+      }
+
+      changeStatus(FileStatus.Ready)
+      this.fileList.push(file)
+    } catch (error) {
+      console.error('Error getting file metadata:', error)
+      this.emit(Callbacks.Fail, null, this.fileList)
+    }
 
     this.request({
       action: this.action,
