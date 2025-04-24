@@ -68,6 +68,7 @@ class Chunk {
       const progressleHandle = throttle(updateProgress, 200)
 
       this.request = this.customRequest({
+        index: this.index,
         action: this.action + '?index=' + this.index,
         data: { url: this.url, index: this.index },
         headers: {

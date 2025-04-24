@@ -5,6 +5,7 @@ import DBStorage from './DBStorage.js'
 export default class DBWrapper {
   constructor(version = 1) {
     this._store = isSupportIndexedDB ? new DBStorage(version) : new MemoryStorage()
+    this.type = isSupportIndexedDB ? 'IndexedDB' : 'Memory'
   }
 
   async checkChunk(fileId, chunkIndex) {
