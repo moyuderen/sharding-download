@@ -97,6 +97,9 @@ class File {
     } catch (error) {
       this.changeStatus(FileStatus.Fail)
       this.downloader.emit(Callbacks.Fail, this)
+      if (this.options.cleaupFailed) {
+        this.storage.cleanupFileData(this.etag)
+      }
       throw new Error(error)
     }
   }

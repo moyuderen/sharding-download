@@ -20,7 +20,8 @@ const defaultsConfig = {
     }
     return true
   },
-  isPart: true
+  isPart: true,
+  cleaupFailed: false
 }
 
 class Downloader {
@@ -80,6 +81,8 @@ class Downloader {
         }
         file.name = getFilenameFromDisposition(headers['content-disposition'])
         file.link = URL.createObjectURL(data)
+        file.progress = 1
+        file.loadedSize = file.size
         this.emit(Callbacks.Success, file, this.fileList)
         changeStatus(FileStatus.Success)
       },
@@ -89,6 +92,8 @@ class Downloader {
       },
       onProgress: (e) => {
         file.progress = e.loaded / e.total
+        file.loadedSize = e.loaded
+        file.size = e.total
         this.emit(Callbacks.Progress, file, this.fileList)
         changeStatus(FileStatus.Downloading)
       }

@@ -44,7 +44,7 @@ export default function request(options) {
       data: xhr.response,
       status: xhr.status,
       headers: {
-        'content-type': xhr.getResponseHeader('content-type'),
+        'content-length': xhr.getResponseHeader('content-length'),
         'content-range': xhr.getResponseHeader('content-range'),
         'content-disposition': xhr.getResponseHeader('content-disposition'),
         etag: xhr.getResponseHeader('Etag')
