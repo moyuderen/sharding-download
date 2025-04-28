@@ -1,30 +1,43 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quick Start</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="//unpkg.com/element-plus/dist/index.css" />
+    <script src="//unpkg.com/element-plus"></script>
     <script src="https://unpkg.com/axios@0.24.0/dist/axios.min.js"></script>
   </head>
   <body>
-    <script type="module" src="quick-start.js"></script>
-    
     <div id="app">
-      <img
-        id="image"
-        width="300"
-        height="300"
-      />
-      <button @click="hanldeDownload()">Satrt download</button>
+      <el-select v-model="currentUrl" placeholder="请输入地址" clearable filterable>
+        <el-option
+          v-for="item in options"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value"></el-option>
+      </el-select>
+      <el-divider></el-divider>
+      <el-button type="primary" size="default" @click="hanldeDownload">Sharding download</el-button>
+      <el-divider></el-divider>
+      <div>
+        <el-image style="width: 150px; height: 150px" :src="link" fit="fill" :lazy="true" :alt="link"></el-image>
+        <div><el-link type="primary" :href="link" target="_blank">{{ link }}</el-link></div>
+      </div>
+      <el-divider></el-divider>
       <div>
         <div v-for="(task, index) in downloadFileList" :key="task.index" @click="openFile(task)">
-          <span>{{ task.name }}</span>
-          <span>{{ task.status }}</span>
-          <span>{{ (task.progress * 100).toFixed(2) }}%</span>
-          <span>{{ task.renderLoadedSize }} / {{task.renderSize}}</span>
+          <el-space>
+            <span>{{ task.name }}</span>
+            <span>{{ task.status }}</span>
+            <span>{{ task.renderLoadedSize }} / {{task.renderSize}}</span>
+          </el-space>
+          <el-progress :percentage="Number((task.progress * 100).toFixed(0))" />
         </div>
       </div>
     </div>
+
+    <script type="module" src="quick-start.js"></script>
   </body>
 </html>
