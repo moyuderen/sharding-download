@@ -13,8 +13,8 @@ const app = Vue.createApp({
     const downloader = new Downloader({
       action: 'http://localhost:3100/download',
       chunkSize: 1024 * 1024 * 2,
-      threads: 3,
-      isPart: false
+      threads: 3
+      // isPart: false
     })
 
     downloader.on('change', (file, fileList) => {
