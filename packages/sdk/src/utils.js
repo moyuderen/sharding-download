@@ -1,3 +1,6 @@
+let uid = 0
+export const generateUid = (prex = 'id') => `${prex}-${+new Date()}-${uid++}`
+
 export const isSupportIndexedDB = !!window.indexedDB
 
 export async function asyncPool(poolLimit, iterator, iteratorFn) {

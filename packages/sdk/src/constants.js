@@ -1,4 +1,5 @@
 export const FileStatus = {
+  Init: 'init',
   Ready: 'ready',
   Downloading: 'downloading',
   Downloaded: 'downloaded',

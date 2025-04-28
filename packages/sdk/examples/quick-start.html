@@ -27,13 +27,13 @@
       </div>
       <el-divider></el-divider>
       <div>
-        <div v-for="(task, index) in downloadFileList" :key="task.index" @click="openFile(task)">
+        <div v-for="file in downloadFileList" :key="file.id">
           <el-space>
-            <span>{{ task.name }}</span>
-            <span>{{ task.status }}</span>
-            <span>{{ task.renderLoadedSize }} / {{task.renderSize}}</span>
+            <span @click="openFile(file)">{{ file.name }}</span>
+            <span>{{ file.status }}</span>
+            <span>{{ file.renderLoadedSize }} / {{file.renderSize}}</span>
           </el-space>
-          <el-progress :percentage="Number((task.progress * 100).toFixed(0))" />
+          <el-progress :percentage="Number((file.progress * 100).toFixed(0))" />
         </div>
       </div>
     </div>

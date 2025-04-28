@@ -13,8 +13,8 @@ const app = Vue.createApp({
     const downloader = new Downloader({
       action: 'http://localhost:3100/download',
       chunkSize: 1024 * 1024 * 2,
-      threads: 3
-      // isPart: true
+      threads: 3,
+      isPart: false
     })
 
     downloader.on('change', (file, fileList) => {
@@ -22,7 +22,7 @@ const app = Vue.createApp({
       downloadFileList.value = [...fileList]
     })
 
-    downloader.on('success', (file, fileList) => {
+    downloader.on('success', (file, _fileList) => {
       console.log('sucess', file.link)
       link.value = file.link
     })
@@ -31,7 +31,7 @@ const app = Vue.createApp({
       console.table('fail !!!!!!', file, fileList)
     })
 
-    downloader.on('progress', (file, fileList) => {
+    downloader.on('progress', (_file, _fileList) => {
       // console.log('progress', file.progress, fileList)
     })
 

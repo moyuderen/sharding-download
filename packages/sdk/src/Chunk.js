@@ -7,7 +7,6 @@ class Chunk {
     this.parent = parent
     this.options = options
 
-    this.action = options.action
     this.url = options.url
     this.fileSize = parent.size
     this.chunkSize = options.chunkSize
@@ -16,9 +15,6 @@ class Chunk {
     this.size = this.endByte - this.stardByte
     this.status = ChunkStatus.Ready
     this.maxRetries = options.maxRetries
-    this.retryInterval = options.retryInterval
-    this.customRequest = options.customRequest
-    this.requestSucceed = options.requestSucceed
     this.request = null
     this.timer = null
     this.progress = 0
@@ -51,7 +47,7 @@ class Chunk {
           } catch (error) {
             reject(error)
           }
-        }, this.retryInterval)
+        }, this.options.retryInterval)
         return
       }
 
@@ -66,16 +62,15 @@ class Chunk {
         this.status = ChunkStatus.Downloading
       }
       const progressleHandle = throttle(updateProgress, 200)
-
-      this.request = this.customRequest({
+      this.request = this.options.request({
         index: this.index,
-        action: this.action + '?index=' + this.index,
+        action: this.options.action + '?index=' + this.index,
         data: { url: this.url, index: this.index },
         headers: {
           Range: `bytes=${this.stardByte}-${this.endByte}`
         },
         onSuccess: async ({ data }) => {
-          const isSuccess = await this.requestSucceed(data)
+          const isSuccess = await this.options.requestSucceed(data)
           if (!isSuccess) {
             onFail(new Error('Request failed'), reject)
             return
