@@ -1,24 +1,24 @@
 export const FileStatus = {
-  Init: 'init',
-  Ready: 'ready',
-  Downloading: 'downloading',
-  Downloaded: 'downloaded',
-  Cancelled: 'cancelled',
-  Success: 'success',
-  Fail: 'fail'
+  INIT: 'init',
+  READY: 'ready',
+  DOWNLOADING: 'downloading',
+  DOWNLOADED: 'downloaded',
+  CANCELLED: 'cancelled',
+  SUCCESS: 'success',
+  FAILED: 'failed'
 }
 
 export const ChunkStatus = {
-  Ready: 'Ready',
-  Pending: 'Pending',
-  Downloading: 'Downloading',
-  Downloaded: 'Downloaded',
-  Error: 'Error'
+  READY: 'ready',
+  PENDING: 'pending',
+  DOWNLOADING: 'downloading',
+  DOWNLOADED: 'downloaded',
+  ERROR: 'error'
 }
 
 export const Callbacks = {
-  Fail: 'fail',
-  Progress: 'progress',
-  Success: 'success',
-  Change: 'change'
+  FAILED: 'failed',
+  PROGRESS: 'progress',
+  SUCCESS: 'success',
+  CHANGE: 'change'
 }

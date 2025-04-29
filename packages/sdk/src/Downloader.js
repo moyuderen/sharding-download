@@ -10,7 +10,7 @@ const defaultsConfig = {
   threads: 6,
   customRequest: null,
   maxRetries: 3,
-  retryInterval: 1000,
+  retryInterval: 500,
   requestSucceed: async (data) => {
     const body = await getBody(data)
     if (body.code && body.code !== '00000') {
@@ -39,9 +39,9 @@ class Downloader {
   }
 
   async start(url) {
-    if (!url) {
-      this.emit(Callbacks.Fail, null, this.fileList)
-      throw new Error('Url is required')
+    if (typeof url !== 'string' || !url.trim()) {
+      this.emit(Callbacks.FAILED, null, this.fileList)
+      throw new Error('A valid URL is required')
     }
 
     if (!this.options.customRequest && !this.options.action) {
@@ -53,7 +53,9 @@ class Downloader {
   }
 
   addFile(file) {
-    this.fileList.push(file)
+    if (!this.fileList.some((f) => f.id === file.id)) {
+      this.fileList.push(file)
+    }
   }
 }
 

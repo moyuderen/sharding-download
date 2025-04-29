@@ -6,6 +6,7 @@ import {
   Res,
   Post,
   Body,
+  Query,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { statSync } from 'fs';
@@ -43,12 +44,15 @@ export class AppController {
     @Body() postData: { url: string; index: number },
     @Headers() headers: Record<string, string>,
     @Res() res: Response,
+    @Query('error') error: string,
   ) {
-    const { url: filename, index } = postData;
-    // if (index === 0) {
-    //   res.status(200).json({ code: '00003', message: '模拟下载失败' });
-    //   return;
-    // }
+    const { url: filename } = postData;
+
+    if (error === '1') {
+      res.status(200).json({ code: '00003', message: '模拟下载失败' });
+      return;
+    }
+
     try {
       const { filePath, stats } = await this.appService.validateFile(filename);
       const range = headers.range;

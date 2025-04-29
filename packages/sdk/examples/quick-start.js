@@ -18,7 +18,7 @@ const app = Vue.createApp({
     })
 
     downloader.on('change', (file, fileList) => {
-      console.log('------ change status', file.status)
+      // console.log('------ change status', file.status)
       downloadFileList.value = [...fileList]
     })
 
@@ -27,7 +27,7 @@ const app = Vue.createApp({
       link.value = file.link
     })
 
-    downloader.on('fail', (file, fileList) => {
+    downloader.on('failed', (file, fileList) => {
       console.table('fail !!!!!!', file, fileList)
     })
 
@@ -45,13 +45,34 @@ const app = Vue.createApp({
       window.open(file.link, '_blank')
     }
 
+    const handleRetry = (file) => {
+      file.retry()
+    }
+
+    const hanlePause = (file) => file.pause()
+    const hanleResume = (file) => file.resume()
+
+    const customColorMethod = (status) => {
+      const colorMap = {
+        ready: '#409eff',
+        downloading: '#409eff',
+        success: '#67c23a',
+        failed: '#f56c6c'
+      }
+      return colorMap[status] || '#409eff'
+    }
+
     return {
       currentUrl,
       options,
       link,
       downloadFileList,
       hanldeDownload,
-      openFile
+      openFile,
+      handleRetry,
+      hanlePause,
+      hanleResume,
+      customColorMethod
     }
   }
 })

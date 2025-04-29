@@ -31,9 +31,12 @@
           <el-space>
             <span @click="openFile(file)">{{ file.name }}</span>
             <span>{{ file.status }}</span>
-            <span>{{ file.renderLoadedSize }} / {{file.renderSize}}</span>
+            <span style="font-size: 12px;">{{ file.renderLoadedSize }} / {{file.renderSize}}</span>
+            <el-button v-if="file.status === 'failed'" type="primary" size="small" @click="handleRetry(file)">Retry</el-button>
+            <el-button v-if="file.status === 'downloading'" type="primary" size="small" @click="hanlePause(file)">Pause</el-button>
+            <el-button v-if="file.status === 'cancelled'" type="primary" size="small" @click="hanleResume(file)">Resume</el-button>
           </el-space>
-          <el-progress :percentage="Number((file.progress * 100).toFixed(0))" />
+          <el-progress :percentage="Number((file.progress * 100).toFixed(0))" :color="() => customColorMethod(file.status)" /> 
         </div>
       </div>
     </div>

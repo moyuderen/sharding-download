@@ -53,10 +53,16 @@ export async function asyncPool(poolLimit, iterator, iteratorFn) {
       .filter((result) => result.status === 'rejected')
       .map((result) => result.reason)
 
+    const errorsIndex = errors.map((item) => item.index)
+
     if (errors.length > 0) {
       throw new AggregateError(
         errors,
-        `[AsyncPool] 部分任务执行失败 (失败数: ${errors.length}/${ret.length})`
+        `\n
+        [AsyncPool] 部分任务执行失败 (失败数: ${errors.length}/${ret.length}); 
+        \n
+        [Error Tasks]: [${errorsIndex}]}
+        `
       )
     }
 

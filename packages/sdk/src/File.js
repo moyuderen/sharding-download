@@ -13,7 +13,7 @@ class File {
     this.name = ''
     this.size = ''
     this.etag = ''
-    this.status = FileStatus.Init
+    this.status = FileStatus.INIT
     this.link = ''
 
     this.progress = 0
@@ -35,10 +35,11 @@ class File {
 
   changeStatus(newStatus) {
     this.status = newStatus
-    this.downloader.emit(Callbacks.Change, this)
+    this.downloader.emit(Callbacks.CHANGE, this)
   }
 
   createChunks() {
+    this.chunks = []
     this.totalChunks = Math.ceil(this.size / this.options.chunkSize)
     for (let i = 0; i < this.totalChunks; i++) {
       this.chunks.push(new Chunk(i, this, this.options))
@@ -46,28 +47,22 @@ class File {
   }
 
   async getMetadata() {
-    const request = this.options.request
+    const { request, action, url } = this.options
     return new Promise((resolve, reject) => {
       request({
-        action: this.options.action + '?meta',
-        data: {
-          url: this.options.url,
-          index: -1
-        },
-        headers: {
-          Range: `bytes=0-1`
-        },
+        action: `${action}?meta${false ? '&error=1' : ''}`,
+        data: { url, index: -1 },
+        headers: { Range: 'bytes=0-1' },
         onSuccess: async ({ headers, data }) => {
-          const isSuccess = await this.options.requestSucceed(data)
-          if (!isSuccess) {
-            reject(new Error('Request failed'))
-            return
+          if (!(await this.options.requestSucceed(data))) {
+            throw new Error('Request failed')
           }
 
           try {
             const name = getFilenameFromDisposition(headers['content-disposition'] || '')
             const size = Number(headers['content-range'].split('/')[1])
             const etag = headers['etag']
+
             this.name = name
             this.size = size
             this.etag = etag
@@ -77,9 +72,7 @@ class File {
             reject(new Error('Failed to parse response headers'))
           }
         },
-        onFail: (e) => {
-          reject(e)
-        }
+        onFail: reject
       })
     })
   }
@@ -87,13 +80,14 @@ class File {
   async start() {
     try {
       await this.getMetadata()
-    } catch {
-      this.downloader.emit(Callbacks.Fail, this)
-      return
+      this.changeStatus(FileStatus.READY)
+      this.downloader.addFile(this)
+      this.options.isPart ? this.downloadPart() : this.downloadFull()
+    } catch (error) {
+      console.error('Error:', error)
+      this.downloader.emit(Callbacks.FAILED, this)
+      throw new Error('Failed to start download')
     }
-    this.changeStatus(FileStatus.Ready)
-    this.downloader.addFile(this)
-    this.options.isPart ? this.downloadPart() : this.downloadFull()
   }
 
   async downloadPart() {
@@ -103,131 +97,113 @@ class File {
     this.createChunks()
     let metadata = await this.storage.getMetadata(this.etag)
 
-    if (!metadata) {
+    if (!metadata || metadata.totalChunks !== this.totalChunks) {
+      await this.storage.cleanupFileData(this.etag)
       metadata = { downloadedChunks: [] }
       await this.storage.updateMetadata(this, [])
-    } else {
-      if (metadata.totalChunks !== this.totalChunks) {
-        await this.storage.cleanupFileData(this.etag)
-        metadata = { downloadedChunks: [] }
-        await this.storage.updateMetadata(this, [])
-      }
     }
 
     this.downloaded = new Set(metadata.downloadedChunks)
-    this.changeStatus(FileStatus.Downloading)
+    this.changeStatus(FileStatus.DOWNLOADING)
 
     try {
-      await asyncPool(this.options.threads, this.chunks, async (chunk) => {
-        const existing = await this.storage.checkChunk(this.etag, chunk.index)
-
-        if (this.downloaded.has(chunk.index) && existing) {
-          chunk.changeSuccess()
-          this.updateProgress()
-          return chunk
-        }
-
-        if (!this.downloaded.has(chunk.index)) {
-          if (existing) {
-            this.downloaded.add(chunk.index)
-            await this.storage.updateMetadata(this, [...this.downloaded])
-            chunk.changeSuccess()
-            this.updateProgress()
-            return chunk
-          }
-        }
-
-        let data
-        try {
-          data = await chunk.send()
-          await this.storage.saveChunk(this.etag, chunk.index, chunk.size, data)
-          this.downloaded.add(chunk.index)
-          await this.storage.updateMetadata(this, [...this.downloaded])
-          data = null
-          return chunk
-        } catch (error) {
-          data = null
-          throw new Error(error)
-        }
-      })
-      this.changeStatus(FileStatus.Downloaded)
-      this.mergeFilePart()
+      await this.downloadChunks()
+      this.changeStatus(FileStatus.DOWNLOADED)
+      await this.mergeFilePart()
     } catch (error) {
-      this.changeStatus(FileStatus.Fail)
-      this.downloader.emit(Callbacks.Fail, this)
-      if (this.options.cleaupFailed) {
-        this.storage.cleanupFileData(this.etag)
-      }
+      this.changeStatus(FileStatus.FAILED)
+      this.downloader.emit(Callbacks.FAILED, this)
       throw new Error(error)
     }
   }
+
+  async downloadChunks() {
+    await asyncPool(this.options.threads, this.chunks, async (chunk) => {
+      const existing = await this.storage.checkChunk(this.etag, chunk.index)
+      if (this.downloaded.has(chunk.index) && existing) {
+        chunk.setSuccess()
+        this.updateProgress()
+        return chunk
+      }
+
+      if (!this.downloaded.has(chunk.index)) {
+        if (existing) {
+          this.downloaded.add(chunk.index)
+          await this.storage.updateMetadata(this, [...this.downloaded])
+          chunk.setSuccess()
+          this.updateProgress()
+          return chunk
+        }
+      }
+
+      const data = await chunk.send()
+      await this.storage.saveChunk(this.etag, chunk.index, chunk.size, data)
+      this.downloaded.add(chunk.index)
+      await this.storage.updateMetadata(this, [...this.downloaded])
+      return chunk
+    })
+  }
+
   async downloadFull() {
-    const request = this.options.request
+    const { request, action, url } = this.options
     request({
-      action: this.options.action + '?full',
-      data: { url: this.options.url, index: -2 },
+      action: action + '?full',
+      data: { url, index: -2 },
       onSuccess: async ({ data }) => {
-        const isSuccess = await this.options.requestSucceed(data)
-        if (!isSuccess) {
-          this.emit(Callbacks.Error)
-          return
+        if (!(await this.options.requestSucceed(data))) {
+          throw new Error('Request failed')
         }
 
         this.link = this.generateBlobUrl(data)
         this.progress = 1
         this.loadedSize = this.size
-        this.changeStatus(FileStatus.Success)
-        this.downloader.emit(Callbacks.Success, this)
+        this.changeStatus(FileStatus.SUCCESS)
+        this.downloader.emit(Callbacks.SUCCESS, this)
       },
       onFail: () => {
-        this.changeStatus(FileStatus.Fail)
-        this.downloader.emit(Callbacks.Error, this)
+        this.changeStatus(FileStatus.FAILED)
+        this.downloader.emit(Callbacks.FAILED, this)
       },
       onProgress: (e) => {
         this.progress = e.loaded / e.total
         this.loadedSize = e.loaded
-        this.changeStatus(FileStatus.Downloading)
-        this.downloader.emit(Callbacks.Progress, this, this.fileList)
+        this.changeStatus(FileStatus.DOWNLOADING)
+        this.downloader.emit(Callbacks.PROGRESS, this, this.fileList)
       }
     })
   }
 
   updateProgress() {
-    const progressInfo = this.chunks.reduce(
-      (info, chunk) => {
-        info.progress += chunk.progress * (chunk.size / this.size)
-        info.loadedSize += chunk.loaded
-        return info
-      },
-      {
-        loadedSize: 0,
-        progress: 0
-      }
+    const { loadedSize, progress } = this.chunks.reduce(
+      ({ loadedSize, progress }, chunk) => ({
+        loadedSize: loadedSize + chunk.loaded,
+        progress: progress + chunk.progress * (chunk.size / this.size)
+      }),
+      { loadedSize: 0, progress: 0 }
     )
 
-    const { loadedSize, progress } = progressInfo
-    this.progress = Math.min(1, progress)
-    this.loadedSize = Math.min(this.size, loadedSize)
-    this.changeStatus(FileStatus.Downloading)
-    this.downloader.emit(Callbacks.Progress, this)
+    this.progress = Math.min(1, Math.max(progress, this.progress))
+    this.loadedSize = Math.min(this.size, Math.max(loadedSize, this.loadedSize))
+    this.changeStatus(FileStatus.DOWNLOADING)
+    this.downloader.emit(Callbacks.PROGRESS, this)
   }
 
   async mergeFilePart() {
     this.progress = 1
     this.loadedSize = this.size
-    let chunks = await this.storage.getChunks(this.etag)
+    const chunks = await this.storage.getChunks(this.etag)
     chunks.sort((a, b) => a.chunkIndex - b.chunkIndex)
     console.log(`${this.name} AllChunks: `, chunks, this)
     const blob = new Blob(
       chunks.map((chunk) => chunk.data),
-      { type: chunks[0].data.type }
+      { type: chunks[0].data.type || 'application/octet-stream' }
     )
 
     this.link = this.generateBlobUrl(blob)
-    this.changeStatus(FileStatus.Success)
-    this.downloader.emit(Callbacks.Success, this)
+    this.changeStatus(FileStatus.SUCCESS)
+    this.downloader.emit(Callbacks.SUCCESS, this)
     this.storage.cleanupFileData(this.etag)
-    chunks = []
+    chunks.length = 0
   }
 
   generateBlobUrl(blob) {
@@ -240,11 +216,23 @@ class File {
   }
 
   cancel() {
-    this.changeStatus(FileStatus.Cancelled)
-    this.downloader.emit(Callbacks.Fail, this)
+    this.changeStatus(FileStatus.CANCELLED)
+    this.downloader.emit(Callbacks.CANCELLED, this)
     this.chunks.forEach((chunk) => {
       chunk.cancel()
     })
+  }
+
+  pause() {
+    this.cancel()
+  }
+
+  retry() {
+    this.start()
+  }
+
+  resume() {
+    this.start()
   }
 }
 
