@@ -18,8 +18,7 @@ const defaultsConfig = {
     }
     return true
   },
-  isPart: true,
-  cleaupFailed: false
+  isPart: true
 }
 
 class Downloader {

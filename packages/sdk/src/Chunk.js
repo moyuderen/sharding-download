@@ -51,7 +51,7 @@ class Chunk {
       }
 
       const mockError = (index) => {
-        return [5, 7, 9].includes(index)
+        return [].includes(index)
       }
 
       this.request = this.options.request({
