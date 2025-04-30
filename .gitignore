@@ -136,6 +136,7 @@ dist
 .pnp.*
 
 # nest
-server/uploads
+server/public/*
+!server/public/711.jpg
 !server/dist
 
