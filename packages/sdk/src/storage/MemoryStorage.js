@@ -1,4 +1,4 @@
-const EXPIRATION_TIME = 5 * 3600 * 1000 // 5 hour
+const EXPIRATION_TIME = 10 * 3600 * 1000 // 10 hour
 
 // const store = {
 //   fileId: {
@@ -23,7 +23,7 @@ class MemoryStorage {
       if (!chunks) {
         return resolve(false)
       }
-      resolve(chunks.has(chunkIndex))
+      resolve(chunks.has(chunkIndex) && chunks.get(chunkIndex).data)
     })
   }
 

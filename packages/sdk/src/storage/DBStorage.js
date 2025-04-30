@@ -1,4 +1,4 @@
-const EXPIRATION_TIME = 5 * 3600 * 1000 // 1 hour
+const EXPIRATION_TIME = 10 * 3600 * 1000 // 10 hour
 
 export default class DBWrapper {
   constructor(version = 1) {
@@ -48,11 +48,12 @@ export default class DBWrapper {
     return new Promise((resolve, reject) => {
       const request = store.get([fileId, chunkIndex])
       request.onsuccess = () => {
-        if (request.result) {
-          console.log('checkChunk: exists ------')
+        // fix: 可能存在有chunk信息，但是data不存在
+        if (request.result && request.result.data) {
+          console.log(`✓ ${chunkIndex}`)
           resolve(true)
         } else {
-          console.log("checkChunk: doesn't exist. -----")
+          console.log(`✗ ${chunkIndex} ---`)
           resolve(false)
         }
       }
@@ -189,7 +190,6 @@ export default class DBWrapper {
 
     return new Promise((resolve, reject) => {
       transaction.oncomplete = () => {
-        console.log('清理过期数据完成')
         resolve()
       }
       transaction.onerror = () => reject(transaction.error)
