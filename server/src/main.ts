@@ -12,7 +12,7 @@ async function bootstrap() {
     exposedHeaders: 'Content-Range, Content-Disposition, Etag, Content-Type',
   });
 
-  app.useStaticAssets('./uploads', {
+  app.useStaticAssets('./public', {
     prefix: '/static',
   });
   await app.listen(3100);
