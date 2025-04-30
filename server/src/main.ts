@@ -15,6 +15,6 @@ async function bootstrap() {
   app.useStaticAssets('./uploads', {
     prefix: '/static',
   });
-  await app.listen(3100);
+  await app.listen(3000);
 }
 bootstrap();
