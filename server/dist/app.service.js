@@ -14,7 +14,7 @@ const crypto_1 = require("crypto");
 const promises_1 = require("stream/promises");
 let AppService = class AppService {
     constructor() {
-        this.storagePath = (0, path_1.join)(process.cwd(), 'public');
+        this.storagePath = (0, path_1.join)(__dirname, '..', 'public');
     }
     getSafePath(filename) {
         const safePath = (0, path_1.join)(this.storagePath, filename);

@@ -7,7 +7,8 @@ import { pipeline } from 'stream/promises';
 
 @Injectable()
 export class AppService {
-  private readonly storagePath = join(process.cwd(), 'public');
+  // private readonly storagePath = join(process.cwd(), 'public');
+  private readonly storagePath = join(__dirname, '..', 'public');
 
   getSafePath(filename: string): string {
     const safePath = join(this.storagePath, filename);
