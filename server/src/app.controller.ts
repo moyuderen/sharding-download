@@ -17,6 +17,11 @@ import { sleep } from './utils';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
+  @Get()
+  async index() {
+    return 'Hellp, Sharding Download Server !';
+  }
+
   @Get('getFileMeta/:filename')
   async getFileMetadata(
     @Param('filename') filename: string,
