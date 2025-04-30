@@ -138,5 +138,4 @@ dist
 # nest
 server/uploads
 !server/dist
-!server/uploads/771.jpg
 
