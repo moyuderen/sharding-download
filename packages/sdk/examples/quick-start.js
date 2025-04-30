@@ -11,7 +11,7 @@ const app = Vue.createApp({
     const downloadFileList = ref([])
 
     const downloader = new Downloader({
-      action: 'http://localhost:3100/download',
+      action: 'http://localhost:3100/api/download',
       chunkSize: 1024 * 1024 * 2,
       threads: 3
       // isPart: false
