@@ -1,4 +1,4 @@
-import Downloader from '../src/index.js'
+import Downloader, { FileStatus, Callbacks } from '../src/index.js'
 import optionList from './options.js'
 
 const { ref } = Vue
@@ -18,21 +18,21 @@ const app = Vue.createApp({
       // isPart: false
     })
 
-    downloader.on('change', (file, fileList) => {
+    downloader.on(Callbacks.CHANGE, (file, fileList) => {
       // console.log('------ change status', file.status)
       downloadFileList.value = [...fileList]
     })
 
-    downloader.on('success', (file, _fileList) => {
+    downloader.on(Callbacks.SUCCESS, (file, _fileList) => {
       console.log('sucess', file.link)
       link.value = file.link
     })
 
-    downloader.on('failed', (file, fileList) => {
+    downloader.on(Callbacks.FAILED, (file, fileList) => {
       console.table('fail !!!!!!', file, fileList)
     })
 
-    downloader.on('progress', (_file, _fileList) => {
+    downloader.on(Callbacks.PROGRESS, (_file, _fileList) => {
       // console.log('progress', file.progress, fileList)
     })
 
@@ -55,15 +55,16 @@ const app = Vue.createApp({
 
     const customColorMethod = (status) => {
       const colorMap = {
-        ready: '#409eff',
-        downloading: '#409eff',
-        success: '#67c23a',
-        failed: '#f56c6c'
+        [FileStatus.READY]: '#409eff',
+        [FileStatus.DOWNLOADING]: '#409eff',
+        [FileStatus.SUCCESS]: '#67c23a',
+        [FileStatus.FAILED]: '#f56c6c'
       }
       return colorMap[status] || '#409eff'
     }
 
     return {
+      FileStatus,
       currentUrl,
       options,
       link,
