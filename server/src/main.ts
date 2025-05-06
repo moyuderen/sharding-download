@@ -21,7 +21,13 @@ async function bootstrap() {
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('api', app, document, {
+    customCssUrl: '/static/swagger-ui/swagger-ui.css',
+    customJs: [
+      '/static/swagger-ui/swagger-ui-bundle.js',
+      '/static/swagger-ui/swagger-ui-standalone-preset.js',
+    ],
+  });
 
   // 配置静态文件
   app.useStaticAssets(join(__dirname, '..', 'public'), {
