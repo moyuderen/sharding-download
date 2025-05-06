@@ -15,7 +15,7 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Quick start', link: '/quick-start/start' },
-      { text: 'Server', link: '/server' },
+      { text: 'Server', link: 'https://sharding-download-server.vercel.app/api' },
       { text: 'Q&A', link: '/question' }
     ],
 
