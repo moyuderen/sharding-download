@@ -35,6 +35,7 @@ let FileController = class FileController {
             size: stats.size,
             eTag,
             lastModified: stats.mtime.toISOString(),
+            name: filename,
         });
     }
     async downloadFile(postData, headers, res, error) {

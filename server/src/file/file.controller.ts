@@ -36,6 +36,7 @@ export class FileController {
         size: stats.size,
         eTag,
         lastModified: stats.mtime.toISOString(),
+        name: filename,
       });
   }
 
