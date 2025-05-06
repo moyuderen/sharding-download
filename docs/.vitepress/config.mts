@@ -14,19 +14,44 @@ export default defineConfig({
 
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'QuickStart', link: '/markdown-examples' },
-      { text: 'Examples', link: '/markdown-examples' }
+      { text: 'Quick start', link: '/quick-start/start' },
+      { text: 'Server', link: '/server' },
+      { text: 'Q&A', link: '/question' }
     ],
 
-    sidebar: [
-      {
-        text: 'Examples',
-        items: [
-          { text: 'Markdown Examples', link: '/markdown-examples' },
-          { text: 'Runtime API Examples', link: '/api-examples' }
-        ]
-      }
-    ],
+    sidebar: {
+      '/quick-start/': [
+        {
+          text: 'Guide',
+          items: [
+            {
+              text: '开始',
+              link: '/quick-start/start'
+            },
+            {
+              text: '参数配置',
+              link: '/quick-start/config'
+            },
+            {
+              text: '回调',
+              link: '/quick-start/callback'
+            },
+            {
+              text: '方法',
+              link: '/quick-start/function'
+            },
+            {
+              text: '说明',
+              link: '/quick-start/detail'
+            }
+          ]
+        },
+        {
+          text: '问题',
+          link: '/sdk/questions'
+        }
+      ]
+    },
 
     socialLinks: [{ icon: 'github', link: 'https://github.com/moyuderen/sharding-download' }],
 
