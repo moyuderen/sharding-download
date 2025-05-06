@@ -17,7 +17,7 @@ on:
 
 env:
   NODE_VERSION: '20'
-  PNPM_CACHE_FOLDER: .pnpm-store
+  PNPM_CACHE_FOLDER: .cache/pnpm
 
 # 设置 GITHUB_TOKEN 的权限，以允许部署到 GitHub Pages
 permissions:
@@ -67,7 +67,7 @@ jobs:
         uses: actions/configure-pages@v4
 
       - name: Install dependencies
-        run: pnpm install # 或 pnpm install / yarn install / bun install
+        run: pnpm install  -frozen-lockfile # 或 pnpm install / yarn install / bun install
 
       - name: Build with VitePress
         run: pnpm run docs:build # 或 pnpm docs:build / yarn docs:build / bun run docs:build
