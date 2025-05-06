@@ -22,7 +22,7 @@ export default defineConfig({
     sidebar: {
       '/quick-start/': [
         {
-          text: 'Guide',
+          // text: 'Guide',
           items: [
             {
               text: '开始',
@@ -45,10 +45,6 @@ export default defineConfig({
               link: '/quick-start/detail'
             }
           ]
-        },
-        {
-          text: '问题',
-          link: '/sdk/questions'
         }
       ]
     },
