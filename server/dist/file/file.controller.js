@@ -14,9 +14,11 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FileController = void 0;
 const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
 const fs_1 = require("fs");
 const file_service_1 = require("./file.service");
 const share_1 = require("../share");
+const file_dto_1 = require("./file.dto");
 let FileController = class FileController {
     constructor(fileService) {
         this.fileService = fileService;
@@ -62,6 +64,23 @@ let FileController = class FileController {
 exports.FileController = FileController;
 __decorate([
     (0, common_1.Get)('getFileMeta/:filename'),
+    (0, swagger_1.ApiOperation)({ summary: '获取文件元信息' }),
+    (0, swagger_1.ApiParam)({
+        name: 'filename',
+        example: '711.jpg',
+        description: '文件名称',
+        required: true,
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: '文件元信息',
+        example: {
+            size: 1847928,
+            eTag: 'afe35b83ccd35635b9ea7dc49ba5808c282533499275c8c811da2138c90b5b38',
+            lastModified: '2025-05-06T03:10:20.391Z',
+            name: '711.jpg',
+        },
+    }),
     __param(0, (0, common_1.Param)('filename')),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
@@ -70,6 +89,92 @@ __decorate([
 ], FileController.prototype, "getFileMetadata", null);
 __decorate([
     (0, common_1.Post)('download'),
+    (0, swagger_1.ApiOperation)({ summary: '分段下载' }),
+    (0, swagger_1.ApiQuery)({
+        name: 'error',
+        description: '测试下载失败，为"1"时，接口返回错误(非必填)',
+        examples: {
+            success: {
+                summary: '接口成功',
+                description: '不传或者传其他值',
+                value: '2',
+            },
+            fail: {
+                summary: '接口失败',
+                value: '1',
+                description: '传"1"时这个接口失败',
+            },
+        },
+        required: false,
+    }),
+    (0, swagger_1.ApiHeader)({
+        name: 'Range',
+        description: 'Range of bytes to fetch',
+        required: true,
+        schema: {
+            type: 'string',
+            example: 'bytes=0-1024',
+        },
+    }),
+    (0, swagger_1.ApiBody)({
+        type: file_dto_1.DownloadDto,
+        enum: '771.jpg',
+        examples: {
+            demo: {
+                summary: '文件地址或者文件对应的参数',
+                value: {
+                    url: '711.jpg',
+                },
+            },
+        },
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 206,
+        example: 'ffd8ffe000104a1xxxxxxx',
+        headers: {
+            'Content-range': {
+                description: 'Range of bytes being sent in the response',
+                schema: {
+                    type: 'string',
+                    example: 'bytes 1-1000/288888',
+                },
+            },
+            'Content-length': {
+                description: '文件总字节数',
+                schema: {
+                    type: 'number',
+                    example: '288888',
+                },
+            },
+            ETag: {
+                description: '文件唯一标识，类似hash',
+                schema: {
+                    type: 'string',
+                    example: 'afe35b83ccd35635b9ea7dc49ba5808c282533499275c8c811da2138c90b5b38',
+                },
+            },
+            'Content-Disposition': {
+                description: '文件名称信息',
+                schema: {
+                    type: 'string',
+                    example: `attachment; filename*=UTF-8''711.jpg}`,
+                },
+            },
+        },
+        description: '返回的流信息',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        example: {
+            code: '00003',
+            message: '模拟文件下载错误',
+        },
+        description: '返回错误信息',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 500,
+        description: '系统错误',
+    }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Headers)()),
     __param(2, (0, common_1.Res)()),
@@ -79,6 +184,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], FileController.prototype, "downloadFile", null);
 exports.FileController = FileController = __decorate([
+    (0, swagger_1.ApiTags)('分片下载相关'),
     (0, common_1.Controller)('file'),
     __metadata("design:paramtypes", [file_service_1.FileService])
 ], FileController);

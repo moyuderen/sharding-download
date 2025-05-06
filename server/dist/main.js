@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = require("@nestjs/core");
+const swagger_1 = require("@nestjs/swagger");
 const app_module_1 = require("./app.module");
 const path_1 = require("path");
 async function bootstrap() {
@@ -19,6 +20,13 @@ async function bootstrap() {
             console.log(`[${new Date().toISOString()}] 提供静态文件: ${path}`);
         },
     });
+    const options = new swagger_1.DocumentBuilder()
+        .setTitle('Sharding Download')
+        .setDescription('分片下载文件接口API')
+        .setVersion('1.0')
+        .build();
+    const document = swagger_1.SwaggerModule.createDocument(app, options);
+    swagger_1.SwaggerModule.setup('api', app, document);
     await app.listen(3100);
 }
 bootstrap();

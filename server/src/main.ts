@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
@@ -21,6 +22,15 @@ async function bootstrap() {
       console.log(`[${new Date().toISOString()}] 提供静态文件: ${path}`);
     },
   });
+
+  const options = new DocumentBuilder()
+    .setTitle('Sharding Download')
+    .setDescription('分片下载文件接口API')
+    .setVersion('1.0')
+    .build();
+  const document = SwaggerModule.createDocument(app, options);
+  SwaggerModule.setup('api', app, document);
+
   await app.listen(3100);
 }
 bootstrap();

@@ -11,23 +11,30 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppController = void 0;
 const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
 const app_service_1 = require("./app.service");
 let AppController = class AppController {
     constructor(appService) {
         this.appService = appService;
     }
     async index() {
-        return 'Hellp, Sharding Download Server !';
+        return 'Hello, Sharding Download Server !';
     }
 };
 exports.AppController = AppController;
 __decorate([
-    (0, common_1.Get)(),
+    (0, common_1.Get)('hello'),
+    (0, swagger_1.ApiOperation)({ summary: '测试服务是否启动成功' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Hello, Sharding Download Server !',
+    }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], AppController.prototype, "index", null);
 exports.AppController = AppController = __decorate([
+    (0, swagger_1.ApiTags)('App'),
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [app_service_1.AppService])
 ], AppController);
