@@ -17,6 +17,7 @@ on:
 
 env:
   NODE_VERSION: '20'
+  PNPM_CACHE_FOLDER: .pnpm-store
 
 # 设置 GITHUB_TOKEN 的权限，以允许部署到 GitHub Pages
 permissions:
@@ -44,10 +45,13 @@ jobs:
           version: 8
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm # 或 pnpm / yarn
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - name: Setup pnpm store config
+        run: pnpm config set store-dir $PNPM_CACHE_FOLDER
 
       - name: Install Pnpm
         run: npm install pnpm -g
