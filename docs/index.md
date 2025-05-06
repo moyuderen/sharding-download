@@ -5,7 +5,7 @@ layout: home
 hero:
   name: 'Sharding Download'
   text: '大文件分片下载'
-  tagline: 让下载变的更快，成功率更高！
+  tagline: 让下载变的更快，成功率更高！！
   actions:
     - theme: brand
       text: Markdown Examples

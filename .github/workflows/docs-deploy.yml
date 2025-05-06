@@ -48,8 +48,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm # 或 pnpm / yarn
-          cache-dependency-path: '**/pnpm-lock.yaml'
+          # cache: pnpm # 或 pnpm / yarn
+          # cache-dependency-path: '**/pnpm-lock.yaml'
 
       - name: Verify PNPM Cache Directory
         run: |
