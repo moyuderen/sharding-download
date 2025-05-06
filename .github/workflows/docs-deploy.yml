@@ -43,6 +43,9 @@ jobs:
         with:
           version: 9
 
+      - name: Set up the working directory
+        run: cd docs
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
