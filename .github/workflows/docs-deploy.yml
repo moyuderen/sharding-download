@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: 22
+  NODE_VERSION: 18
 
 # 设置 GITHUB_TOKEN 的权限，以允许部署到 GitHub Pages
 permissions:
@@ -51,15 +51,6 @@ jobs:
 
       - name: Install Pnpm
         run: npm install pnpm -g
-
-      - name: Verify PNPM Cache Directory
-        run: |
-          if [ ! -d "$PNPM_CACHE_FOLDER/store/v3" ]; then
-            echo "PNPM cache directory does not exist, creating it."
-            mkdir -p "$PNPM_CACHE_FOLDER/store/v3"
-          else
-            echo "PNPM cache directory exists."
-          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
