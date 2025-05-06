@@ -109,7 +109,7 @@ let FileService = class FileService {
                 res.status(416).end();
                 break;
             default:
-                res.status(500).end();
+                res.status(500).end(error.message);
         }
     }
 };

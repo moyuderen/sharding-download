@@ -20,13 +20,7 @@ async function bootstrap() {
         .setVersion('1.0')
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, options);
-    swagger_1.SwaggerModule.setup('api', app, document, {
-      customCssUrl: '/static/swagger-ui/swagger-ui.css',
-      customJs: [
-        '/static/swagger-ui/swagger-ui-standalone-preset.js',
-        '/static/swagger-ui/swagger-ui-bundle.js ',
-      ],
-    });
+    swagger_1.SwaggerModule.setup('api', app, document);
     app.useStaticAssets((0, path_1.join)(__dirname, '..', 'public'), {
         prefix: '/static',
         setHeaders: (res, path) => {

@@ -11,7 +11,7 @@
   </head>
   <body>
     <div id="app">
-      <el-select v-model="currentUrl" placeholder="请输入地址" clearable filterable>
+      <el-select v-model="currentUrl" placeholder="请输入地址" clearable filterable allow-create>
         <el-option
           v-for="item in options"
           :key="item.value"
