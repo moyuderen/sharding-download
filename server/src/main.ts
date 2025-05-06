@@ -15,14 +15,6 @@ async function bootstrap() {
     exposedHeaders: 'Content-Range, Content-Disposition, Etag, Content-Type',
   });
 
-  // 配置静态文件
-  app.useStaticAssets(join(__dirname, '..', 'public'), {
-    prefix: '/static',
-    setHeaders: (res, path) => {
-      console.log(`[${new Date().toISOString()}] 提供静态文件: ${path}`);
-    },
-  });
-
   const options = new DocumentBuilder()
     .setTitle('Sharding Download')
     .setDescription('分片下载文件接口API')
@@ -30,6 +22,14 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('/swagger', app, document);
+
+  // 配置静态文件
+  app.useStaticAssets(join(__dirname, '..', 'public'), {
+    prefix: '/static',
+    setHeaders: (res, path) => {
+      console.log(`[${new Date().toISOString()}] 提供静态文件: ${path}`);
+    },
+  });
 
   await app.listen(3100);
 }
