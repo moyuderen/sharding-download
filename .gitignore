@@ -137,9 +137,11 @@ dist
 
 # nest
 server/public/*
+!server/public/swagger-ui
 !server/public/711.jpg
 !server/dist
 server/dist/public/*
 !server/dist/public/711.jpg
+!server/dist/public/swagger-ui
 
 
