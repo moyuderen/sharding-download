@@ -11,6 +11,7 @@ const app = Vue.createApp({
     const downloadFileList = ref([])
 
     const downloader = new Downloader({
+      // action: 'https://sharding-download-server.vercel.app/api/file/download',
       action: 'http://localhost:3100/api/file/download',
       chunkSize: 1024 * 1024 * 2,
       threads: 3

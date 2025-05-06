@@ -168,7 +168,7 @@ class File {
         this.progress = e.loaded / e.total
         this.loadedSize = e.loaded
         this.changeStatus(FileStatus.DOWNLOADING)
-        this.downloader.emit(Callbacks.PROGRESS, this, this.fileList)
+        this.downloader.emit(Callbacks.PROGRESS, this)
       }
     })
   }
@@ -193,7 +193,7 @@ class File {
     this.loadedSize = this.size
     const chunks = await this.storage.getChunks(this.etag)
     chunks.sort((a, b) => a.chunkIndex - b.chunkIndex)
-    console.log(`${this.name} AllChunks: `, chunks, this)
+    // console.log(`${this.name} AllChunks: `, chunks, this)
     const blob = new Blob(
       chunks.map((chunk) => chunk.data),
       { type: chunks[0].data.type || 'application/octet-stream' }
@@ -207,12 +207,11 @@ class File {
   }
 
   generateBlobUrl(blob) {
-    const blobUrl = window.URL.createObjectURL(blob)
-    const timer = setTimeout(() => {
-      clearTimeout(timer)
-      window.URL.revokeObjectURL(blobUrl)
-    }, 1000)
-    return blobUrl
+    return window.URL.createObjectURL(blob)
+  }
+
+  revokeBlobUrl() {
+    window.URL.revokeObjectURL(this.link)
   }
 
   cancel() {
