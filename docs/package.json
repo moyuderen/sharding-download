@@ -1,0 +1,16 @@
+{
+  "name": "sharding-download-api",
+  "version": "1.0.0",
+  "description": "大文件分片下载文档",
+  "scripts": {
+    "docs:dev": "vitepress dev --port 3300",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview --port 3400"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vitepress": "^1.6.3"
+  }
+}
