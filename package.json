@@ -1,0 +1,12 @@
+{
+  "name": "sharding-download",
+  "version": "1.0.0",
+  "private": true,
+  "description": "",
+  "scripts": {
+    "docs:build": "pnpm run -C docs docs:build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
