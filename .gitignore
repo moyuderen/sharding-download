@@ -139,4 +139,7 @@ dist
 server/public/*
 !server/public/711.jpg
 !server/dist
+server/dist/public/*
+!server/dist/public/711.jpg
+
 
