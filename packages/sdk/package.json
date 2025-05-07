@@ -1,7 +1,28 @@
 {
-  "name": "sdk",
-  "private": true,
-  "version": "0.0.0",
+  "name": "sharding-download",
+  "private": false,
+  "version": "0.0.1",
+  "description": "大文件分片下载",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [],
+  "author": "",
+  "homepage": "",
+  "repository": {
+    "url": ""
+  },
+  "module": "./dist/sharding-download.js",
+  "main": "./dist/sharding-download.umd.cjs",
+  "exports": {
+    ".": {
+      "require": "./dist/sharding-download.umd.cjs",
+      "import": "./dist/sharding-download.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -14,8 +14,8 @@ export default defineConfig({
   build: {
     lib: {
       entry: './src/index.js',
-      name: 'FragementDownload',
-      fileName: 'fragement-download'
+      name: 'ShardingDownload',
+      fileName: 'sharding-download'
     },
     minify: true
   }
