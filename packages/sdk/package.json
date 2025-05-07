@@ -1,7 +1,7 @@
 {
   "name": "sharding-downloader",
   "private": false,
-  "version": "0.0.2",
+  "version": "1.0.0",
   "description": "大文件分片下载",
   "publishConfig": {
     "access": "public"
@@ -10,7 +10,8 @@
     "大文件分片下载",
     "IndexedDB",
     "下载进度",
-    "暂停重试"
+    "暂停重试",
+    "IndexedDB"
   ],
   "author": "moyuderen",
   "homepage": "https://moyuderen.github.io/sharding-download/",
