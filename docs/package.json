@@ -1,5 +1,6 @@
 {
   "name": "sharding-download-api",
+  "private": true,
   "version": "1.0.0",
   "description": "大文件分片下载文档",
   "scripts": {

@@ -1,8 +1,11 @@
 {
-  "name": "sharding-download",
+  "name": "sharding-download-root",
   "version": "1.0.0",
   "private": true,
   "description": "",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "docs:build": "pnpm run -C docs docs:build",
     "change": "pnpm changeset",
