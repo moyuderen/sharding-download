@@ -5,9 +5,12 @@ export default defineConfig({
   base: '/sharding-download/',
   title: 'Sharding Download',
   description: '大文件分片下载',
+  head: [['link', { rel: 'icon', href: '/favicon.ico' }]],
   lastUpdated: true,
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
+    // logo: '/logo.svg',
+
     search: {
       provider: 'local'
     },
@@ -15,7 +18,17 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Quick start', link: '/quick-start/start' },
-      { text: 'Server', link: 'https://sharding-download-server.vercel.app/api' },
+      {
+        text: 'Server',
+        items: [
+          { text: '接口示例', link: '/server' },
+          { text: 'Swagger', link: 'https://sharding-download-server.vercel.app/api' },
+          {
+            text: 'Github',
+            link: 'https://github.com/moyuderen/sharding-download/tree/main/server'
+          }
+        ]
+      },
       { text: 'Q&A', link: '/question' }
     ],
 
