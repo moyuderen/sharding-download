@@ -1,16 +1,21 @@
 {
-  "name": "sharding-download",
+  "name": "sharding-downloader",
   "private": false,
   "version": "0.0.2",
   "description": "大文件分片下载",
   "publishConfig": {
     "access": "public"
   },
-  "keywords": [],
-  "author": "",
-  "homepage": "",
+  "keywords": [
+    "大文件分片下载",
+    "IndexedDB",
+    "下载进度",
+    "暂停重试"
+  ],
+  "author": "moyuderen",
+  "homepage": "https://moyuderen.github.io/sharding-download/",
   "repository": {
-    "url": ""
+    "url": "https://github.com/moyuderen/sharding-download"
   },
   "module": "./dist/sharding-download.js",
   "main": "./dist/sharding-download.umd.cjs",

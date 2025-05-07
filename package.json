@@ -10,7 +10,7 @@
     "docs:build": "pnpm run -C docs docs:build",
     "change": "pnpm changeset",
     "change-version": "pnpm changeset version",
-    "publish": "pnpm install && pnpm build -F sharding-download && pnpm publish -F sharding-download"
+    "push": "pnpm install && pnpm -F sharding-downloader build && pnpm -F sharding-downloader publish"
   },
   "keywords": [],
   "author": "",
