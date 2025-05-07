@@ -2,54 +2,169 @@
 outline: deep
 ---
 
-# Runtime API Examples
+# 参数配置
 
-This page demonstrates usage of some of the runtime APIs provided by VitePress.
+## action
 
-The main `useData()` API can be used to access site, theme, and page data for the current page. It works in both `.md` and `.vue` files:
+下载文件服务端接口地址
 
-```md
-<script setup>
-import { useData } from 'vitepress'
+**类型** `string`
 
-const { theme, page, frontmatter } = useData()
-</script>
+**默认值** `''`
 
-## Results
+**Mock** `https://sharding-download-server.vercel.app/api/file/download`
 
-### Theme Data
+> [!IMPORTANT]
+> 当`customRequest`配置了值时，`action`不会校验必填
+>
 
-<pre>{{ theme }}</pre>
+## isPart
 
-### Page Data
+是否分片下载, 为`false`时不会进行分片请求和合并操作
 
-<pre>{{ page }}</pre>
+**类型** `boolean`
 
-### Page Frontmatter
+**默认值** `true`
 
-<pre>{{ frontmatter }}</pre>
+## chunkSize
+
+文件分片大小，单位是`bit`
+
+**类型** `number`
+
+**默认值** `1024 * 1024 * 2`
+
+> [!WARNING]
+> `chunkSize`过小会导致分片过多，建立http请求过多导致下载慢，用户根据自己的情况可自定义大小
+>
+
+## threads
+
+单个文件并发请求数量
+
+**类型** `number`
+
+**默认值** `6`
+
+## maxRetries
+
+文件中某个分片请求失败时的重试次数
+
+**类型** `number`
+
+**默认值** `3`
+
+> [!NOTE]
+> 设置的值需要大于0，小于等于0时不会进行重试
+>
+
+## retryInterval
+
+文件中某个分片请求失败时的重试间隔
+
+**类型** `number`
+
+**默认值** `500`
+
+> [!NOTE]
+> `maxRetries`设置值有效时生效
+>
+
+## customRequest
+
+自定义请求, 函数需要返回一个`abort`方法来取消当前请求
+
+**类型** `null | (Options) => abort`
+
+**默认值** `null`
+
+**示例**
+
+```typescript
+type Headers = {
+    Range: string  // eg: `bytes=${chunk.stardByte}-${chunk.endByte}`
+}
+
+type SuccessResponse = {
+    data: Blob,
+    headers: {
+        'content-range': string,
+        'content-disposition': string,
+        'etag': string
+    },
+    [key: string]: any
+}
+
+type Options = {
+    action: string, // 下载文件的后端接口
+    data: { url: string }, // { url: string } 请求的的obs地址
+    headers: Headers // { Range: `bytes=${chunk.stardByte}-${chunk.endByte}`}
+    onSuccess: (response: SuccessResponse) => {},
+    onFail: () => {},
+    onProgress: (e) => {} // 下载进度 e.loaded 和 e.total
+}
+
+
+const customRequest = (options) => {
+  const CancelToken = axios.CancelToken
+  const source = CancelToken.source()
+  const { data = {}, headers = {}, onProgress = noop, onSuccess = noop, onFail = noop } = options
+
+  download(data, {
+    headers,
+    cancelToken: source.token,
+    onDownloadProgress: function (progressEvent) {
+      onProgress(progressEvent)
+    },
+  })
+    .then((response: SuccessResponse) => {
+      onSuccess(response)
+    })
+    .catch((e) => {
+      console.log('error', e)
+      onFail(e)
+    })
+
+  return {
+    abort() {
+      source.cancel('Operation canceled by the user.')
+    },
+  }
+}
 ```
 
-<script setup>
-import { useData } from 'vitepress'
+## requestSucceed
 
-const { site, theme, page, frontmatter } = useData()
-</script>
+判断接口成功的方法
 
-## Results
+**类型** `(SuccessResponse) => boolean`
 
-### Theme Data
+**默认值**
 
-<pre>{{ theme }}</pre>
+```js
+const requestSucceed = (response) => {
+  const body = await getBody(response)
+  if (body.code && body.code !== '00000') {
+    return false
+  }
+  return true
+}
+```
 
-### Page Data
+**示例**
 
-<pre>{{ page }}</pre>
-
-### Page Frontmatter
-
-<pre>{{ frontmatter }}</pre>
-
-## More
-
-Check out the documentation for the [full list of runtime APIs](https://vitepress.dev/reference/runtime-api#usedata).
+```js
+ const requestSucceed = (response) => {
+    const data = await getBody(response) // 解析返回的二进制结果
+    if (isBlob(data)) {
+      return true
+    } else {
+      if(data.code !== '00000') {
+        ElMessage.error(data.message || 'Error')
+        return false
+      } else {
+        return true
+      }
+    }
+  }
+```

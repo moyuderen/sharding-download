@@ -2,54 +2,56 @@
 outline: deep
 ---
 
-# Runtime API Examples
+# Callback
 
-This page demonstrates usage of some of the runtime APIs provided by VitePress.
+## Callback枚举值
 
-The main `useData()` API can be used to access site, theme, and page data for the current page. It works in both `.md` and `.vue` files:
-
-```md
-<script setup>
-import { useData } from 'vitepress'
-
-const { theme, page, frontmatter } = useData()
-</script>
-
-## Results
-
-### Theme Data
-
-<pre>{{ theme }}</pre>
-
-### Page Data
-
-<pre>{{ page }}</pre>
-
-### Page Frontmatter
-
-<pre>{{ frontmatter }}</pre>
+```js
+export const Callbacks = {
+  FAILED: 'failed',
+  PROGRESS: 'progress',
+  SUCCESS: 'success',
+  CHANGE: 'change'
+}
 ```
 
-<script setup>
-import { useData } from 'vitepress'
+## change
 
-const { site, theme, page, frontmatter } = useData()
-</script>
+文件状态改变时触发
 
-## Results
+```js
+let downloadFileList = []
+downloader.on(Callbacks.CHANGE, (file, fileList) => {
+  downloadFileList.value = [...fileList];
+});
+```
 
-### Theme Data
+## success
 
-<pre>{{ theme }}</pre>
+文件下载成功时触发
 
-### Page Data
+```js
+downloader.on(Callbacks.SUCCESS, (file, fileList) => {
+  console.log(file.link)
+});
+```
 
-<pre>{{ page }}</pre>
+## failed
 
-### Page Frontmatter
+文件下载失败时触发
 
-<pre>{{ frontmatter }}</pre>
+```js
+downloader.on(Callbacks.FAILED, (file, fileList) => {
+  console.log("failed !!!!!!", file, fileList);
+});
+```
 
-## More
+## progress
 
-Check out the documentation for the [full list of runtime APIs](https://vitepress.dev/reference/runtime-api#usedata).
+文件下载进度，值在`0-1`之间
+
+```js
+downloader.on(Callbacks.PROGRESS, (_file, _fileList) => {
+  console.log('progress', file.progress)
+});
+```
