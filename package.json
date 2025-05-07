@@ -4,9 +4,15 @@
   "private": true,
   "description": "",
   "scripts": {
-    "docs:build": "pnpm run -C docs docs:build"
+    "docs:build": "pnpm run -C docs docs:build",
+    "change": "pnpm changeset",
+    "change-version": "pnpm changeset version",
+    "publish": "pnpm install && pnpm build -F sharding-download && pnpm publish -F sharding-download"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@changesets/cli": "^2.29.3"
+  }
 }
