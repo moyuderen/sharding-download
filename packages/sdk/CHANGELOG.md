@@ -1,5 +1,11 @@
 # sharding-download
 
+## 1.0.1
+
+### Patch Changes
+
+- chore: keywords
+
 ## 1.0.0
 
 ### Major Changes
