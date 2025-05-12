@@ -21,6 +21,7 @@ class File {
     this.chunks = []
     this.totalChunks = 0
     this.downloaded = new Set()
+    this.metaAbort = null
 
     this.start()
   }
@@ -49,7 +50,7 @@ class File {
   async getMetadata() {
     const { request, action, url } = this.options
     return new Promise((resolve, reject) => {
-      request({
+      this.metaAbort = request({
         action: `${action}?meta${false ? '&error=1' : ''}`,
         data: { url, index: -1 },
         headers: { Range: 'bytes=0-1' },
@@ -227,11 +228,18 @@ class File {
   }
 
   retry() {
-    this.start()
+    if (this.status === FileStatus.FAILED) {
+      this.start()
+    }
   }
 
-  resume() {
-    this.start()
+  resume = () => {
+    if (this.status === FileStatus.CANCELLED) {
+      if (this.metaAbort) {
+        this.metaAbort.abort()
+      }
+      this.start()
+    }
   }
 }
 

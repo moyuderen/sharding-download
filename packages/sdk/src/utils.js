@@ -159,3 +159,30 @@ export const throttle = (fn, wait = 300) => {
     }
   }
 }
+
+export function debounce(callback, wait = 1000, immediate = false) {
+  let timeoutId = null
+
+  return function (...args) {
+    // 保存调用上下文和参数
+    const context = this
+
+    // 清除之前的定时器
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+    }
+
+    // 立即执行（前缘触发）
+    if (immediate && !timeoutId) {
+      callback.apply(context, args)
+    }
+
+    // 设置新的定时器
+    timeoutId = setTimeout(() => {
+      if (!immediate) {
+        callback.apply(context, args)
+      }
+      timeoutId = null
+    }, wait)
+  }
+}
