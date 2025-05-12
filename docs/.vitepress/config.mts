@@ -29,7 +29,16 @@ export default defineConfig({
           }
         ]
       },
-      { text: 'Q&A', link: '/question' }
+      {
+        text: 'Abort',
+        items: [
+          { text: 'FAQ', link: '/qustion' },
+          {
+            text: 'CHANGELOG',
+            link: 'https://github.com/moyuderen/sharding-download/blob/main/packages/sdk/CHANGELOG.md'
+          }
+        ]
+      }
     ],
 
     sidebar: {
