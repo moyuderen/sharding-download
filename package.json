@@ -8,6 +8,8 @@
   ],
   "scripts": {
     "docs:build": "pnpm run -C docs docs:build",
+    "sdk:dev": "pnpm run -C packages/sdk dev",
+    "server:dev": "pnpm run -C server start:debug",
     "change": "pnpm changeset",
     "change-version": "pnpm changeset version",
     "push-npm": "pnpm install && pnpm -F sharding-downloader build && pnpm -F sharding-downloader publish"
