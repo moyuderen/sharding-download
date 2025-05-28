@@ -70,6 +70,22 @@ outline: deep
 > `maxRetries`设置值有效时生效
 >
 
+## storageVersion
+
+DB的versiion
+
+**类型** `number`
+
+**默认值** `1`
+
+## storageName
+
+DB的name
+
+**类型** `string`
+
+**默认值** `file_chunks_db`
+
 ## customRequest
 
 自定义请求, 函数需要返回一个`abort`方法来取消当前请求
