@@ -1,8 +1,8 @@
 const EXPIRATION_TIME = 10 * 3600 * 1000 // 10 hour
 
 export default class DBWrapper {
-  constructor(version = 1) {
-    this.dbName = 'file_chunks_db'
+  constructor(version = 1, dbName = 'file_chunks_db') {
+    this.dbName = dbName
     this.version = version
   }
 

@@ -1,21 +1,19 @@
 import Downloader, { FileStatus, Callbacks } from '../src/index.js'
-import optionList from './options.js'
+import { customConfig, urlOptions, actionList } from './options.js'
 
-const { ref } = Vue
+const { ref, reactive, watch } = Vue
 
 const app = Vue.createApp({
   setup() {
     const currentUrl = ref('711.jpg')
-    const options = ref(optionList)
+    const options = ref(urlOptions)
+    const config = reactive(customConfig)
     const link = ref('')
     const downloadFileList = ref([])
 
     const downloader = new Downloader({
-      // action: 'https://sharding-download-server.vercel.app/api/file/download',
-      action: 'http://localhost:3100/api/file/download',
-      chunkSize: 1024 * 1024 * 2,
-      threads: 3
-      // isPart: false
+      ...config,
+      chunkSize: config.chunkSize * 1024 * 1024
     })
 
     downloader.on(Callbacks.CHANGE, (file, fileList) => {
@@ -63,10 +61,24 @@ const app = Vue.createApp({
       return colorMap[status] || '#409eff'
     }
 
+    watch(
+      () => config,
+      (newVal) => {
+        downloader.setOption({
+          ...newVal,
+          chunkSize: newVal.chunkSize * 1024 * 1024
+        })
+      },
+      {
+        deep: true
+      }
+    )
     return {
       FileStatus,
       currentUrl,
+      config,
       options,
+      actionList,
       link,
       downloadFileList,
       hanldeDownload,

@@ -1,5 +1,4 @@
 import Chunk from './Chunk'
-import Storage from './storage/Storage.js'
 import { asyncPool, renderSize, generateUid, getFilenameFromDisposition } from './utils'
 import { FileStatus, Callbacks } from './constants.js'
 
@@ -7,7 +6,7 @@ class File {
   constructor(options, downloader) {
     this.options = options
     this.downloader = downloader
-    this.storage = new Storage()
+    this.storage = downloader.storage
 
     this.id = generateUid()
     this.name = ''

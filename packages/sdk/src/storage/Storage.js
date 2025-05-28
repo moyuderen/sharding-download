@@ -3,8 +3,8 @@ import MemoryStorage from './MemoryStorage.js'
 import DBStorage from './DBStorage.js'
 
 export default class DBWrapper {
-  constructor(version = 1) {
-    this._store = isSupportIndexedDB ? new DBStorage(version) : new MemoryStorage()
+  constructor(version = 1, dbName = 'file_chunks_db') {
+    this._store = isSupportIndexedDB ? new DBStorage(version, dbName) : new MemoryStorage()
     this.type = isSupportIndexedDB ? 'IndexedDB' : 'Memory'
   }
 

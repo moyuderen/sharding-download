@@ -1,10 +1,13 @@
 import request from './request.js'
 import File from './File.js'
 import Event from './Event.js'
+import Storage from './storage/Storage.js'
 import { getBody } from './utils.js'
 import { Callbacks } from './constants.js'
 
 const defaultsConfig = {
+  storageVersion: 1,
+  storageName: 'file_chunks_db',
   action: '',
   chunkSize: 1024 * 1024 * 2,
   threads: 6,
@@ -26,6 +29,7 @@ class Downloader {
     this.options = Object.assign(defaultsConfig, options)
     this.options.request = this.options.customRequest || request
     this.event = new Event()
+    this.storage = new Storage(options.storageVersion, options.storageName)
     this.fileList = []
   }
 
@@ -35,6 +39,11 @@ class Downloader {
 
   emit(name, ...args) {
     this.event.emit(name, ...args, this.fileList)
+  }
+
+  setOption(options) {
+    this.options = Object.assign(this.options, options)
+    this.storage = new Storage(options.storageVersion, options.storageName)
   }
 
   async start(url) {

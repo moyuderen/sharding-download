@@ -11,13 +11,61 @@
   </head>
   <body>
     <div id="app">
-      <el-select v-model="currentUrl" placeholder="请输入地址" clearable filterable allow-create>
-        <el-option
-          v-for="item in options"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value"></el-option>
-      </el-select>
+      <el-form :model="config" ref="form" label-width="130px" :inline="false" size="default">
+        <el-form-item label="下载地址或者标识">
+          <el-select v-model="currentUrl" placeholder="请输入地址" clearable filterable allow-create>
+            <el-option
+              v-for="item in options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="action">
+          <el-select v-model="config.action" placeholder="请输入地址" clearable filterable allow-create>
+            <el-option
+              v-for="item in actionList"
+              :key="item"
+              :label="item"
+              :value="item"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="isPart">
+          <el-radio-group v-model="config.isPart">
+            <el-radio :value="true">true</el-radio>
+            <el-radio :value="false">false</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="chunkSize">
+          <el-input-number v-model="config.chunkSize" :step="1" controls-position="right" :min="0.1" style="width: 200px;">
+            <template #prefix>
+              <span>1024 * 1024 * </span>
+            </template>
+            <template #suffix>
+              <span>M</span>
+            </template>
+          </el-input-number>
+        </el-form-item>
+        <el-form-item label="threads">
+          <el-input-number v-model="config.threads" :step="1" controls-position="right" :min="0" style="width: 200px;"/>
+        </el-form-item>
+        <el-form-item label="maxRetries">
+          <el-input-number v-model="config.maxRetries" :step="1" controls-position="right" :min="0" style="width: 200px;"/>
+        </el-form-item>
+        <el-form-item label="retryInterval">
+          <el-input-number v-model="config.retryInterval" :step="100" controls-position="right" :min="0" style="width: 200px;">
+            <template #suffix>
+              <span>ms</span>
+            </template>
+          </el-input-number>
+        </el-form-item>
+        <el-form-item label="storageVersion">
+          <el-input-number v-model="config.storageVersion" :step="1" controls-position="right" :min="1" placeholder="version" style="width: 200px;"/>
+        </el-form-item>
+        <el-form-item label="storageName">
+          <el-input v-model="config.storageName" clearable placeholder="default: file_chunks_db"/>
+        </el-form-item>
+      </el-form>
       <el-divider></el-divider>
       <el-button type="primary" size="default" @click="hanldeDownload">Sharding download</el-button>
       <el-divider></el-divider>
