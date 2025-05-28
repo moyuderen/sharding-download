@@ -1,18 +1,3 @@
-export default [
-  {
-    lable: '711.jpg',
-    value: '711.jpg'
-  },
-  {
-    lable: 'book.pdf',
-    value: 'book.pdf'
-  },
-  {
-    lable: 'Discord.dmg',
-    value: 'Discord.dmg'
-  }
-]
-
 export const customConfig = {
   action: 'http://localhost:3100/api/file/download',
   isPart: true,
@@ -31,15 +16,15 @@ export const actionList = [
 
 export const urlOptions = [
   {
-    lable: '711.jpg(vercel支持)',
+    label: '711.jpg (vercel支持)',
     value: '711.jpg'
   },
   {
-    lable: 'book.pdf',
+    label: 'book.pdf',
     value: 'book.pdf'
   },
   {
-    lable: 'Discord.dmg',
+    label: 'Discord.dmg',
     value: 'Discord.dmg'
   }
 ]
