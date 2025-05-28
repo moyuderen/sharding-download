@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -6,6 +7,7 @@ import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const port = 3100;
   app.setGlobalPrefix('api');
   app.enableCors({
     origin(origin, callback) {
@@ -36,7 +38,7 @@ async function bootstrap() {
       console.log(`[${new Date().toISOString()}] 提供静态文件: ${path}`);
     },
   });
-
-  await app.listen(3100);
+  Logger.debug(`Nest.js server started on port ${port}.`, 'Bootstrap');
+  await app.listen(port);
 }
 bootstrap();

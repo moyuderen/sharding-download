@@ -1,11 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = require("@nestjs/core");
+const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const app_module_1 = require("./app.module");
 const path_1 = require("path");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const port = 3100;
     app.setGlobalPrefix('api');
     app.enableCors({
         origin(origin, callback) {
@@ -33,7 +35,8 @@ async function bootstrap() {
             console.log(`[${new Date().toISOString()}] 提供静态文件: ${path}`);
         },
     });
-    await app.listen(3100);
+    common_1.Logger.debug(`Nest.js server started on port ${port}.`, 'Bootstrap');
+    await app.listen(port);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map
