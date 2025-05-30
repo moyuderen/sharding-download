@@ -1,4 +1,5 @@
 import { Downloader, FileStatus, Callbacks } from '../src/index'
+// import { Downloader, FileStatus, Callbacks } from '../dist/sharding-downloader.es.js'
 import { customConfig, urlOptions, actionList } from './options'
 
 const { ref, reactive, watch } = Vue

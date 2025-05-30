@@ -15,6 +15,7 @@ export default defineConfig({
   plugins: [
     dts({
       insertTypesEntry: true, // 自动在 package.json 中添加 types 字段
+      tsconfigPath: './tsconfig.json',
       outDir: 'dist/types', // 声明文件输出目录
       strictOutput: true,
       rollupTypes: true
@@ -23,8 +24,10 @@ export default defineConfig({
   build: {
     lib: {
       entry: './src/index.ts',
-      name: 'downloader',
-      fileName: 'downloader'
+      name: 'ShardingDownloader',
+      fileName: (format) => `sharding-downloader.${format}.js`,
+      // 支持的模块格式
+      formats: ['es', 'umd', 'cjs']
     },
     minify: true
   }
