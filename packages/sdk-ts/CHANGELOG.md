@@ -1,5 +1,11 @@
 # sharding-download
 
+## 1.2.2
+
+### Patch Changes
+
+- chore: 打包声明文件
+
 ## 1.2.1
 
 ### Patch Changes
