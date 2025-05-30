@@ -9,7 +9,7 @@ npm i sharding-downloader
 ## 使用
 
 ```javascript
-import Downloader from 'sharding-downloader'
+import { Downloader } from 'sharding-downloader'
 
 const downloader = new Downloader({
   action: 'https://sharding-download-server.vercel.app/api/file/download',

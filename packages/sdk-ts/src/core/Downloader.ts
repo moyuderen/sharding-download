@@ -35,7 +35,7 @@ class Downloader {
   constructor(options: UserDownloaderOptions) {
     this.options = Object.assign(defaultsConfig, options)
     this.event = new Event()
-    this.storage = new Storage(options.storageVersion, options.storageName)
+    this.storage = new Storage(this.options.storageVersion, this.options.storageName)
     this.fileList = []
   }
 

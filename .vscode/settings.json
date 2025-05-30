@@ -24,5 +24,7 @@
   },
   "[vue-html]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+  },
+  "editor.fontFamily": "\"JetBrains Mono\", Fira Code, \"IBM Plex Mono\", Menlo, Monaco, 'Courier New', monospace",
+  "editor.fontSize": 12
 }

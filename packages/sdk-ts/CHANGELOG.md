@@ -1,5 +1,17 @@
 # sharding-download
 
+## 1.2.1
+
+### Patch Changes
+
+- fix: 默认db name和version
+
+## 1.2.0
+
+### Minor Changes
+
+- typescript 重构
+
 ## 1.1.0
 
 ### Minor Changes (2025-05-28)

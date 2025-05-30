@@ -15,6 +15,10 @@ class File {
     this.status = FileStatus.INIT
     this.link = ''
 
+    this.chunkSize = options.chunkSize
+    this.action = options.action
+    this.url = options.url
+
     this.progress = 0
     this.loadedSize = 0
     this.chunks = []
