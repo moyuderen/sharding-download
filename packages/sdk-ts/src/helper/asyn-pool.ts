@@ -1,7 +1,4 @@
-export type Iterator = Array<any>
-export type IteratorFn = (element: any, iterator: Iterator) => Promise<any>
-
-export async function asyncPool(poolLimit = 6, iterator: Iterator, iteratorFn: IteratorFn) {
+export async function asyncPool(poolLimit = 6, iterator: any[], iteratorFn: Function) {
   const ret = [] // 存储所有任务的Promise
   const executing = new Set() // 追踪执行中的任务
 
@@ -51,10 +48,16 @@ export async function asyncPool(poolLimit = 6, iterator: Iterator, iteratorFn: I
       .filter((result) => result.status === 'rejected')
       .map((result) => result.reason)
 
+    const errorsIndex = errors.map((item) => item.index)
+
     if (errors.length > 0) {
       throw new AggregateError(
         errors,
-        `[AsyncPool] 部分任务执行失败 (失败数: ${errors.length}/${ret.length})`
+        `\n
+        [AsyncPool] 部分任务执行失败 (失败数: ${errors.length}/${ret.length}); 
+        \n
+        [Error Tasks]: [${errorsIndex}]}
+        `
       )
     }
 
@@ -63,7 +66,7 @@ export async function asyncPool(poolLimit = 6, iterator: Iterator, iteratorFn: I
       if (result.status === 'fulfilled') return result.value
       throw result.reason
     })
-  } catch (error) {
-    throw new Error(error instanceof Error ? error.message : String(error))
+  } catch (error: any) {
+    throw new Error(error)
   }
 }

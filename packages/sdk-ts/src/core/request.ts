@@ -1,70 +1,107 @@
-export type Response = {
-  headers: Record<string, any>
-  data: any
-  status?: number
-  config?: Record<string, any>
+type RequestHeaders = {
+  'content-length': string
+  'content-range': string
+  'content-disposition': string
+  etag: string
+  [key: string]: string | undefined
 }
 
-export type RequestOption = {
+export type RequestResponse = {
+  data: Blob | object
+  status: number
+  headers: RequestHeaders
+}
+export type RequestOptions = {
+  /** 下载接口地址 */
   action: string
-  data: Record<string, any>
-  headers: Record<string, string>
-  onProgress?: (e: ProgressEvent) => void
-  onSuccess: (response: Response) => void
-  onFailed: (xhr: any, e?: any) => void
-}
 
-export type Request = (option: RequestOption) => { abort: Function }
+  /** 接口method类型 */
+  method: 'POST' | 'GET' | 'post' | 'get'
 
-const parseResonse = (xhr: XMLHttpRequest) => {
-  return {
-    status: xhr.status,
-    data: xhr.response,
-    headers: {
-      'content-length': xhr.getResponseHeader('content-length'),
-      'content-range': xhr.getResponseHeader('content-range'),
-      'content-disposition': xhr.getResponseHeader('content-disposition'),
-      etag: xhr.getResponseHeader('Etag')
-    }
+  /** 自定义上传参数 */
+  data: {
+    url: string
+    index: number
+    [key: string]: any
   }
+
+  /** 自定义headers */
+  headers: {
+    Range: string
+    [key: string]: string
+  }
+
+  /** 接口返回类型 */
+  responseType: XMLHttpRequestResponseType
+
+  /** 跨域是否支持携带凭证 */
+  withCredentials: boolean
+
+  /** 下载进度回调 */
+  onProgress: (e: ProgressEvent) => void
+
+  /** 下载成功回调 */
+  onSuccess: (response: RequestResponse) => void
+
+  /** 下载失败回调 */
+  onFail: (request: any, error: Error) => void
 }
 
-export const request: Request = (option: RequestOption) => {
-  const { action, data, headers, onProgress, onSuccess, onFailed } = option
+export type RequestReturn = {
+  abort: () => void
+  canceled?: boolean
+}
+
+export default function request(options: RequestOptions): RequestReturn {
+  const {
+    action,
+    method = 'POST',
+    data = {},
+    headers = {},
+    responseType = 'blob',
+    withCredentials = true,
+    onProgress = () => {},
+    onSuccess = () => {},
+    onFail = () => {}
+  } = options
 
   let xhr = new XMLHttpRequest()
-
-  xhr.responseType = 'blob'
-  xhr.withCredentials = true
-  xhr.open('POST', action, true)
-
-  const requestData: Record<string, any> = {}
-  Object.keys(data).forEach((key) => {
-    requestData[key] = data[key]
-  })
+  xhr.responseType = responseType
+  xhr.withCredentials = withCredentials
+  xhr.open(method, action, true)
 
   // 'setRequestHeader' on 'XMLHttpRequest': The object's state must be OPENED
   if ('setRequestHeader' in xhr) {
-    Object.keys(headers).forEach((key) => {
-      xhr.setRequestHeader(key, headers[key])
-    })
+    Object.entries({
+      'content-type': 'application/json;charset=UTF-8',
+      ...headers
+    }).forEach(([key, value]) => xhr.setRequestHeader(key, value))
   }
 
-  xhr.addEventListener('progress', (e) => onProgress && onProgress(e))
-  xhr.addEventListener('load', () => {
+  xhr.addEventListener('timeout', () => onFail(xhr, new Error('Request timed out')))
+  xhr.addEventListener('progress', onProgress)
+  xhr.addEventListener('error', () =>
+    onFail(xhr, new Error(`Request failed with status ${xhr.status}`))
+  )
+  xhr.addEventListener('readystatechange', () => {
+    if (xhr.readyState !== 4) return
     if (xhr.status < 200 || xhr.status >= 300) {
-      onFailed(xhr)
+      onFail(xhr, new Error(`xhr: status === ${xhr.status}`))
       return
     }
-
-    onSuccess(parseResonse(xhr))
+    onSuccess({
+      data: xhr.response,
+      status: xhr.status,
+      headers: {
+        'content-length': xhr.getResponseHeader('content-length') || '',
+        'content-range': xhr.getResponseHeader('content-range') || '',
+        'content-disposition': xhr.getResponseHeader('content-disposition') || '',
+        etag: xhr.getResponseHeader('etag') || ''
+      }
+    })
   })
-  xhr.addEventListener('error', (e) => {
-    onFailed(xhr, e)
-  })
 
-  xhr.setRequestHeader('content-type', 'application/json;charset=UTF-8')
-  xhr.send(JSON.stringify(requestData))
+  xhr.send(JSON.stringify(data))
 
   return {
     abort() {
@@ -72,5 +109,3 @@ export const request: Request = (option: RequestOption) => {
     }
   }
 }
-
-export default request

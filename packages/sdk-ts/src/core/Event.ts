@@ -1,49 +1,46 @@
-export type Func = (...args: any[]) => any
-
 export default class Event {
-  events: Map<string, Set<Func>>
+  public events: Map<string, Function[]>
 
   constructor() {
     this.events = new Map()
   }
 
-  on(name: string, func: Func) {
-    const funcs = this.events.get(name)
+  on(name: string, callback: Function) {
+    if (typeof callback !== 'function') return
 
-    if (!funcs) {
-      this.events.set(name, new Set([func]))
-    } else {
-      if (funcs.has(func)) {
-        return
-      }
-      funcs.add(func)
+    const callbacks = this.events.get(name) || []
+    if (!callbacks.includes(callback)) {
+      callbacks.push(callback)
+      this.events.set(name, callbacks)
     }
   }
 
-  emit(name: string, ...args: any[]) {
-    const funcs = this.events.get(name)
-    if (!funcs) {
+  off(name: string, callback: Function) {
+    if (!this.events.has(name)) return
+
+    if (!callback) {
+      this.events.set(name, [])
       return
     }
 
-    for (let func of funcs.values()) {
-      func(...args)
+    const callbacks = this.events.get(name)?.filter((cb) => cb !== callback) as Function[]
+    this.events.set(name, callbacks)
+  }
+
+  emit(name: string, ...args: any[]) {
+    const callbacks = this.events.get(name)
+    if (callbacks && callbacks.length) {
+      callbacks.forEach((cb) => cb(...args))
     }
   }
 
-  off(name: string, func: Func) {
-    const funcs = this.events.get(name)
-    if (!funcs) return
+  once(name: string, callback: Function) {
+    if (typeof callback !== 'function') return
 
-    funcs.delete(func)
-  }
-
-  once(name: string, func: Func) {
-    const on = (...args: any[]) => {
-      func.apply(this, args)
-      this.off(name, on)
+    const onceCallback = (...args: any[]) => {
+      callback(...args)
+      this.off(name, onceCallback)
     }
-    on.func = func
-    this.on(name, on)
+    this.on(name, onceCallback)
   }
 }

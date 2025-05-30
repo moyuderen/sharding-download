@@ -1,16 +1,24 @@
-const EXPIRATION_TIME = 5 * 3600 * 1000 // 1 hour
+import FileContext from '../FileContext'
+import type { FileMetadata, StorageChunk } from './Storage'
 
-export default class DBStorage {
-  constructor(version = 1) {
-    this.dbName = 'file_chunks_db'
+const EXPIRATION_TIME = 10 * 3600 * 1000 // 10 hour
+
+export default class IndexedDBWrapper {
+  public dbName: string
+  public version: number
+  public db: IDBDatabase | null
+
+  constructor(version = 1, dbName = 'file_chunks_db') {
+    this.dbName = dbName
     this.version = version
+    this.db = null
   }
 
   init() {
     return new Promise((resolve, reject) => {
       const request = window.indexedDB.open(this.dbName, this.version)
-      request.onupgradeneeded = (event) => {
-        const db = event.target.result
+      request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
+        const db = (event.target as IDBOpenDBRequest).result
         if (!db.objectStoreNames.contains('chunks')) {
           const chunksStore = db.createObjectStore('chunks', {
             keyPath: ['fileId', 'chunkIndex']
@@ -24,35 +32,36 @@ export default class DBStorage {
         }
       }
 
-      request.onsuccess = (event) => {
-        this.db = event.target.result
+      request.onsuccess = (event: Event) => {
+        this.db = (event.target as IDBOpenDBRequest).result
         resolve(this.db)
       }
 
-      request.onerror = (event) => {
-        reject(event.target.error)
+      request.onerror = (event: Event) => {
+        reject((event.target as IDBOpenDBRequest).error)
       }
     })
   }
 
-  async transaction(storeName, mode = 'readonly') {
+  async transaction(storeName: 'chunks' | 'metadata', mode: IDBTransactionMode = 'readonly') {
     await this.init()
-    const tx = this.db.transaction([storeName], mode)
+    const tx = this.db!.transaction([storeName], mode)
     const store = tx.objectStore(storeName)
     return store
   }
 
-  async checkChunk(fileId, chunkIndex) {
+  async checkChunk(fileId: string, chunkIndex: number) {
     const store = await this.transaction('chunks', 'readonly')
 
     return new Promise((resolve, reject) => {
       const request = store.get([fileId, chunkIndex])
       request.onsuccess = () => {
-        if (request.result) {
-          console.log('checkChunk: exists ------')
+        // fix: 可能存在有chunk信息，但是data不存在
+        if (request.result && request.result.data) {
+          console.log(`✓ ${chunkIndex}`)
           resolve(true)
         } else {
-          console.log("checkChunk: doesn't exist. -----")
+          console.log(`✗ ${chunkIndex} ---`)
           resolve(false)
         }
       }
@@ -60,8 +69,8 @@ export default class DBStorage {
     })
   }
 
-  async saveChunk(fileId, chunkIndex, chunkSize, chunkData) {
-    const payload = {
+  async saveChunk(fileId: string, chunkIndex: number, chunkSize: number, chunkData: Blob) {
+    const payload: StorageChunk = {
       fileId,
       chunkIndex,
       chunkSize,
@@ -81,8 +90,8 @@ export default class DBStorage {
     })
   }
 
-  async updateMetadata(file, downloadedChunks) {
-    const metaPayload = {
+  async updateMetadata(file: FileContext, downloadedChunks: number[]) {
+    const metaPayload: FileMetadata = {
       fileId: file.etag,
       fileName: file.name,
       totalSize: file.size,
@@ -100,42 +109,42 @@ export default class DBStorage {
       request.onsuccess = () => {
         resolve(request.result)
       }
-      request.onerror = (event) => reject(event.target.error)
+      request.onerror = (event) => reject((event.target as IDBRequest).error)
     })
   }
 
-  async getMetadata(fileId) {
+  async getMetadata(fileId: string): Promise<FileMetadata> {
     const store = await this.transaction('metadata')
     return new Promise((resolve, reject) => {
       const request = store.get(fileId)
       request.onsuccess = () => {
         resolve(request.result)
       }
-      request.onerror = (event) => reject(event.target.error)
+      request.onerror = (event) => reject((event.target as IDBRequest).error)
     })
   }
 
-  async getChunks(fileId) {
+  async getChunks(fileId: string): Promise<StorageChunk[]> {
     const store = await this.transaction('chunks')
     return new Promise((resolve, reject) => {
       const index = store.index('fileId')
       const request = index.getAll(fileId)
       request.onsuccess = () => resolve(request.result)
-      request.onerror = (event) => reject(event.target.error)
+      request.onerror = (event) => reject((event.target as IDBRequest).error)
     })
   }
 
-  async cleanupFileData(fileId) {
+  async cleanupFileData(fileId: string) {
     // 开启事务（跨对象存储事务需要较新浏览器支持）
     await this.init()
-    const transaction = this.db.transaction(['chunks', 'metadata'], 'readwrite')
+    const transaction = this.db!.transaction(['chunks', 'metadata'], 'readwrite')
 
     // 删除所有分片数据
     const chunksStore = transaction.objectStore('chunks')
     const chunksIndex = chunksStore.index('fileId')
     const range = IDBKeyRange.only(fileId)
     chunksIndex.openCursor(range).onsuccess = (event) => {
-      const cursor = event.target.result
+      const cursor = (event.target as IDBRequest).result
       if (cursor) {
         cursor.delete()
         cursor.continue()
@@ -147,7 +156,7 @@ export default class DBStorage {
     metadataStore.delete(fileId)
 
     return new Promise((resolve, reject) => {
-      transaction.oncomplete = () => resolve()
+      transaction.oncomplete = () => resolve(true)
       transaction.onerror = () => reject(transaction.error)
     })
   }
@@ -157,7 +166,7 @@ export default class DBStorage {
 
     // 开启事务（跨对象存储事务需要较新浏览器支持）
     await this.init()
-    const transaction = this.db.transaction(['chunks', 'metadata'], 'readwrite')
+    const transaction = this.db!.transaction(['chunks', 'metadata'], 'readwrite')
 
     const range = IDBKeyRange.upperBound(nowTime - EXPIRATION_TIME)
 
@@ -165,14 +174,14 @@ export default class DBStorage {
     const metadataStore = transaction.objectStore('metadata')
     const metaIndex = metadataStore.index('updateAt')
     const metaIndexReauqest = metaIndex.openCursor(range)
-    const metaIndexReauqestPromise = new Promise((resolve, reject) => {
+    const metaIndexReauqestPromise = new Promise((resolve) => {
       metaIndexReauqest.onsuccess = (event) => {
-        const cursor = event.target.result
+        const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result
         if (cursor) {
           cursor.delete()
           cursor.continue()
         }
-        resolve()
+        resolve(true)
       }
     })
     await metaIndexReauqestPromise
@@ -180,7 +189,7 @@ export default class DBStorage {
     const chunksStore = transaction.objectStore('chunks')
     const chunksIndex = chunksStore.index('updateAt')
     chunksIndex.openCursor(range).onsuccess = (event) => {
-      const cursor = event.target.result
+      const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result
       if (cursor) {
         cursor.delete()
         cursor.continue()
@@ -189,8 +198,7 @@ export default class DBStorage {
 
     return new Promise((resolve, reject) => {
       transaction.oncomplete = () => {
-        console.log('清理过期数据完成')
-        resolve()
+        resolve(true)
       }
       transaction.onerror = () => reject(transaction.error)
     })

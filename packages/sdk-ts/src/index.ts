@@ -1,3 +1,4 @@
 import Downloader from './core/Downloader'
+import { Callbacks, FileStatus } from './core/constants'
 
-export default Downloader
+export { Downloader, Callbacks, FileStatus }

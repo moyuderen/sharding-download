@@ -1,15 +1,35 @@
 import { isSupportIndexedDB } from '../../helper'
-import DBStorage from './DBStorage'
 import MemoryStorage from './MemoryStorage'
-import File from '../File'
+import IndexedDBWrapper from './DBStorage'
+import FileContext from '../FileContext'
 
-export default class Storage {
-  public version: number
-  public _store: DBStorage | MemoryStorage
+export type FileMetadata = {
+  fileId: string
+  fileName: string
+  totalSize: number
+  chunkSize: number
+  totalChunks: number
+  action: string
+  url: string
+  downloadedChunks: number[]
+  updateAt: number
+}
 
-  constructor(version = 1) {
-    this.version = version
-    this._store = isSupportIndexedDB ? new DBStorage(version) : new MemoryStorage()
+export type StorageChunk = {
+  fileId: string
+  chunkIndex: number
+  chunkSize: number
+  data: Blob
+  updateAt: number
+}
+
+export default class DBWrapper {
+  public _store: IndexedDBWrapper | MemoryStorage
+  type: 'IndexedDB' | 'Memory'
+
+  constructor(version = 1, dbName = 'file_chunks_db') {
+    this._store = isSupportIndexedDB ? new IndexedDBWrapper(version, dbName) : new MemoryStorage()
+    this.type = isSupportIndexedDB ? 'IndexedDB' : 'Memory'
   }
 
   async checkChunk(fileId: string, chunkIndex: number) {
@@ -20,7 +40,7 @@ export default class Storage {
     return this._store.saveChunk(fileId, chunkIndex, chunkSize, chunkData)
   }
 
-  async updateMetadata(file: File, downloadedChunks: number[]) {
+  async updateMetadata(file: FileContext, downloadedChunks: number[]) {
     return this._store.updateMetadata(file, downloadedChunks)
   }
 
@@ -36,8 +56,8 @@ export default class Storage {
     return this._store.cleanupFileData(fileId)
   }
 
-  async cleanupExpiredChunks(fileId: string) {
-    return this._store.cleanupExpiredChunks(fileId)
+  async cleanupExpiredChunks() {
+    return this._store.cleanupExpiredChunks()
   }
 
   close() {

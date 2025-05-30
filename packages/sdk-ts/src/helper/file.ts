@@ -1,4 +1,6 @@
-export const getFilenameFromDisposition = (disposition: string) => {
+import { isBlob, isObject } from './type-test'
+
+export const getFilenameFromDisposition = (disposition: string): string => {
   if (!disposition) return ''
 
   // 处理多种格式：filename="...", filename*=UTF-8''..., filename=...
@@ -22,4 +24,33 @@ export const getFilenameFromDisposition = (disposition: string) => {
   }
 
   return filename
+}
+
+export const renderSize = (value: number | string) => {
+  const ONE_KB = 1024
+  if (null === value || value === '') {
+    return '0 B'
+  }
+  const unitArr = new Array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB')
+  let index = 0
+  const srcsize = parseFloat(String(value))
+  index = Math.floor(Math.log(srcsize) / Math.log(ONE_KB))
+  const size = srcsize / Math.pow(ONE_KB, index)
+  const sizeStr = size.toFixed(2) //保留的小数位数
+  return sizeStr + ' ' + unitArr[index]
+}
+
+export const getBody = async (response: any) => {
+  if (isBlob(response)) {
+    try {
+      const responseBlobStr = await response.text()
+      const responseData = JSON.parse(responseBlobStr)
+      return responseData
+    } catch {
+      return response
+    }
+  }
+  if (isObject(response)) {
+    return response
+  }
 }
