@@ -10,5 +10,3 @@ export const isObject = (thing: any) => {
 export const isBlob = (thing: any) => {
   return typeOfTest(thing, 'blob')
 }
-
-export const isSupportIndexedDB = !!window.indexedDB

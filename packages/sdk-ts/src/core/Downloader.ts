@@ -1,47 +1,76 @@
-import Event, { Func } from './Event.ts'
-import File from './File.ts'
-import { DefaultOptions } from './defaults.ts'
-import type { Request } from './request.ts'
+import request from './request'
+import FileContext from './FileContext'
+import Event from './Event'
+import Storage from './storage/Storage'
+import { getBody } from '../helper'
+import { Callbacks } from './constants'
 
-export type DownloaderOptions = {
-  action?: string
-  chunkSize?: number
-  isPart?: boolean
-  threads?: number
-  maxRetries?: number
-  retryInterval?: number
-  requestSucceed?: (response: any) => boolean
-  customRequest?: Request
+import type { DownloaderOptions, UserDownloaderOptions } from './typings'
+
+const defaultsConfig: DownloaderOptions = {
+  storageVersion: 1,
+  storageName: 'file_chunks_db',
+  action: '',
+  chunkSize: 1024 * 1024 * 2,
+  threads: 6,
+  customRequest: request,
+  maxRetries: 3,
+  retryInterval: 500,
+  requestSucceed: async (data) => {
+    const body = await getBody(data)
+    if (body.code && body.code !== '00000') {
+      return false
+    }
+    return true
+  },
+  isPart: true
 }
 
-export default class Downloader {
-  public options: Required<DownloaderOptions>
+class Downloader {
+  public options: DownloaderOptions
   private event: Event
-  public fileList: File[]
+  public storage: Storage
+  public fileList: FileContext[]
 
-  constructor(optons: DownloaderOptions) {
-    this.options = Object.assign(DefaultOptions, optons)
+  constructor(options: UserDownloaderOptions) {
+    this.options = Object.assign(defaultsConfig, options)
     this.event = new Event()
+    this.storage = new Storage(this.options.storageVersion, this.options.storageName)
     this.fileList = []
   }
 
-  on(name: string, func: Func) {
-    this.event.on(name, func)
+  on(name: string, fn: Function) {
+    this.event.on(name, fn)
   }
 
   emit(name: string, ...args: any[]) {
     this.event.emit(name, ...args, this.fileList)
   }
 
-  start(url: string) {
-    if (!url) {
-      console.error('Url is required !')
+  setOption(options: UserDownloaderOptions) {
+    this.options = Object.assign(this.options, options)
+    this.storage = new Storage(options.storageVersion, options.storageName)
+  }
+
+  async start(url: string) {
+    if (typeof url !== 'string' || !url.trim()) {
+      this.emit(Callbacks.FAILED, null, this.fileList)
+      throw new Error('A valid URL is required')
     }
 
-    new File(this, url)
+    if (!this.options.customRequest && !this.options.action) {
+      throw new Error('Config action is required')
+    }
+
+    const tryCreateFile = () => new FileContext({ ...this.options, url }, this)
+    tryCreateFile()
   }
 
-  addFile(file: File) {
-    this.fileList.push(file)
+  addFile(file: FileContext) {
+    if (!this.fileList.some((f) => f.id === file.id)) {
+      this.fileList.push(file)
+    }
   }
 }
+
+export default Downloader

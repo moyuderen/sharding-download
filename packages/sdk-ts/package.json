@@ -1,7 +1,44 @@
 {
-  "name": "sharding-download-next",
-  "private": true,
-  "version": "0.0.0",
+  "name": "sharding-downloader",
+  "private": false,
+  "version": "1.2.2",
+  "description": "This project downloads files in the browser，Support large file sharding and IndexedDB（大文件分片下载）",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "file",
+    "sharding",
+    "download",
+    "downloader",
+    "web",
+    "browser",
+    "retry",
+    "pause",
+    "resume",
+    "大文件分片下载",
+    "IndexedDB",
+    "下载进度",
+    "暂停重试"
+  ],
+  "author": "moyuderen",
+  "homepage": "https://moyuderen.github.io/sharding-download/",
+  "repository": {
+    "url": "https://github.com/moyuderen/sharding-download"
+  },
+  "module": "./dist/sharding-downloader.es.js",
+  "main": "./dist/sharding-downloader.umd.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/sharding-downloader.cjs.js",
+      "import": "./dist/sharding-downloader.es.js",
+      "types": "./dist/types/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,6 +47,7 @@
   },
   "devDependencies": {
     "typescript": "~5.7.2",
-    "vite": "^6.3.1"
+    "vite": "^6.3.1",
+    "vite-plugin-dts": "^4.5.4"
   }
 }

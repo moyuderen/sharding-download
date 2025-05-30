@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quick Start + Typescript</title>
+    <title>Quick Start</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link rel="stylesheet" href="//unpkg.com/element-plus/dist/index.css" />
     <script src="//unpkg.com/element-plus"></script>
@@ -11,27 +11,84 @@
   </head>
   <body>
     <div id="app">
-      <el-select v-model="url" placeholder="请输入地址" clearable filterable>
-        <el-option
-          v-for="item in urls"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value"></el-option>
-      </el-select>
+      <el-form :model="config" ref="form" label-width="130px" :inline="false" size="default">
+        <el-form-item label="下载地址或者标识">
+          <el-select v-model="currentUrl" placeholder="请输入地址" clearable filterable allow-create>
+            <el-option
+              v-for="item in options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="action">
+          <el-select v-model="config.action" placeholder="请输入地址" clearable filterable allow-create>
+            <el-option
+              v-for="item in actionList"
+              :key="item"
+              :label="item"
+              :value="item"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="isPart">
+          <el-radio-group v-model="config.isPart">
+            <el-radio :value="true">true</el-radio>
+            <el-radio :value="false">false</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="chunkSize">
+          <el-input-number v-model="config.chunkSize" :step="1" controls-position="right" :min="0.1" style="width: 200px;">
+            <template #prefix>
+              <span>1024 * 1024 * </span>
+            </template>
+            <template #suffix>
+              <span>M</span>
+            </template>
+          </el-input-number>
+        </el-form-item>
+        <el-form-item label="threads">
+          <el-input-number v-model="config.threads" :step="1" controls-position="right" :min="0" style="width: 200px;"/>
+        </el-form-item>
+        <el-form-item label="maxRetries">
+          <el-input-number v-model="config.maxRetries" :step="1" controls-position="right" :min="0" style="width: 200px;"/>
+        </el-form-item>
+        <el-form-item label="retryInterval">
+          <el-input-number v-model="config.retryInterval" :step="100" controls-position="right" :min="0" style="width: 200px;">
+            <template #suffix>
+              <span>ms</span>
+            </template>
+          </el-input-number>
+        </el-form-item>
+        <el-form-item label="storageVersion">
+          <el-input-number v-model="config.storageVersion" :step="1" controls-position="right" :min="1" placeholder="version" style="width: 200px;"/>
+        </el-form-item>
+        <el-form-item label="storageName">
+          <el-input v-model="config.storageName" clearable placeholder="default: file_chunks_db"/>
+        </el-form-item>
+      </el-form>
       <el-divider></el-divider>
-      <el-button type="primary" @click="handleDownload">Sharding Download</el-button>
+      <el-button type="primary" size="default" @click="hanldeDownload">Sharding download</el-button>
       <el-divider></el-divider>
-      <div class="file-list">
-        <div v-for="file in downloadFiles" :key="file.id">
-          <div>
-            <span>{{ file.name }}</span>
+      <div>
+        <el-image style="width: 150px; height: 150px" :src="link" fit="fill" :lazy="true" :alt="link"></el-image>
+        <div><el-link type="primary" :href="link" target="_blank">{{ link }}</el-link></div>
+      </div>
+      <el-divider></el-divider>
+      <div>
+        <div v-for="file in downloadFileList" :key="file.id">
+          <el-space>
+            <span @click="openFile(file)">{{ file.name }}</span>
             <span>{{ file.status }}</span>
-            <span>{{ file.progress }}</span>
-          </div>
+            <span style="font-size: 12px;">{{ file.renderLoadedSize }} / {{file.renderSize}}</span>
+            <el-button v-if="file.status === 'failed'" type="primary" size="small" @click="handleRetry(file)">Retry</el-button>
+            <el-button v-if="file.status === 'downloading'" type="primary" size="small" @click="hanlePause(file)">Pause</el-button>
+            <el-button v-if="file.status === 'cancelled'" type="primary" size="small" @click="hanleResume(file)">Resume</el-button>
+          </el-space>
+          <el-progress :percentage="Number((file.progress * 100).toFixed(0))" :color="() => customColorMethod(file.status)" /> 
         </div>
       </div>
     </div>
-  </body>
 
-  <script type="module" src="./quick-start.js"></script>
+    <script type="module" src="quick-start.js"></script>
+  </body>
 </html>
