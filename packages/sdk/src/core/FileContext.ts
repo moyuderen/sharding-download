@@ -78,12 +78,12 @@ class FileContext {
     return renderSize(this.loadedSize)
   }
 
-  changeStatus(newStatus: string) {
+  private changeStatus(newStatus: string) {
     this.status = newStatus
     this.downloader.emit(Callbacks.CHANGE, this)
   }
 
-  createChunks() {
+  private createChunks() {
     this.chunks = []
     this.totalChunks = Math.ceil(this.size / this.options.chunkSize)
     for (let i = 0; i < this.totalChunks; i++) {
@@ -91,7 +91,7 @@ class FileContext {
     }
   }
 
-  async getMetadata() {
+  private async getMetadata() {
     const { customRequest, action, url } = this.options
     return new Promise((resolve, reject) => {
       this.metaAbort = customRequest({
@@ -122,11 +122,11 @@ class FileContext {
     })
   }
 
-  async start() {
+  private async start() {
     try {
       await this.getMetadata()
       this.changeStatus(FileStatus.READY)
-      this.downloader.addFile(this)
+      this.downloader._addFile(this)
       this.options.isPart ? this.downloadPart() : this.downloadFull()
     } catch (error) {
       console.error('Error:', error)
@@ -135,7 +135,7 @@ class FileContext {
     }
   }
 
-  async downloadPart() {
+  private async downloadPart() {
     await this.storage.cleanupExpiredChunks()
     console.log('Cleanup expired chunks success')
 
@@ -172,12 +172,12 @@ class FileContext {
     }
   }
 
-  async downloadChunks() {
+  private async downloadChunks() {
     await asyncPool(this.options.threads, this.chunks, async (chunk: Chunk) => {
       const existing = await this.storage.checkChunk(this.etag, chunk.index)
       if (this.downloaded.has(chunk.index) && existing) {
         chunk.setSuccess()
-        this.updateProgress()
+        this._updateProgress()
         return chunk
       }
 
@@ -186,7 +186,7 @@ class FileContext {
           this.downloaded.add(chunk.index)
           await this.storage.updateMetadata(this, [...this.downloaded])
           chunk.setSuccess()
-          this.updateProgress()
+          this._updateProgress()
           return chunk
         }
       }
@@ -199,7 +199,7 @@ class FileContext {
     })
   }
 
-  async downloadFull() {
+  private async downloadFull() {
     const { customRequest, action, url } = this.options
     customRequest({
       action: action + '?full',
@@ -228,7 +228,7 @@ class FileContext {
     })
   }
 
-  updateProgress() {
+  _updateProgress() {
     const { loadedSize, progress } = this.chunks.reduce(
       ({ loadedSize, progress }, chunk) => ({
         loadedSize: loadedSize + chunk.loaded,
@@ -243,7 +243,7 @@ class FileContext {
     this.downloader.emit(Callbacks.PROGRESS, this)
   }
 
-  async mergeFilePart() {
+  private async mergeFilePart() {
     this.progress = 1
     this.loadedSize = this.size
     const chunks = await this.storage.getChunks(this.etag)
@@ -262,15 +262,15 @@ class FileContext {
     chunks.length = 0
   }
 
-  generateBlobUrl(blob: Blob) {
+  public generateBlobUrl(blob: Blob) {
     return window.URL.createObjectURL(blob)
   }
 
-  revokeBlobUrl() {
+  public revokeBlobUrl() {
     window.URL.revokeObjectURL(this.link)
   }
 
-  cancel() {
+  public cancel() {
     this.changeStatus(FileStatus.CANCELLED)
     this.downloader.emit(Callbacks.CANCELLED, this)
     this.chunks.forEach((chunk) => {
@@ -278,17 +278,17 @@ class FileContext {
     })
   }
 
-  pause() {
+  public pause() {
     this.cancel()
   }
 
-  retry() {
+  public retry() {
     if (this.status === FileStatus.FAILED) {
       this.start()
     }
   }
 
-  resume = () => {
+  public resume = () => {
     if (this.status === FileStatus.CANCELLED) {
       if (this.metaAbort) {
         this.metaAbort.abort()

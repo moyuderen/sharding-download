@@ -59,7 +59,7 @@ class Chunk {
     this.loaded = e.loaded
     this.progress = Math.min(Math.max(e.loaded / e.total, this.progress), 1)
     this.status = ChunkStatus.DOWNLOADING
-    this.parent.updateProgress()
+    this.parent._updateProgress()
   }, 200)
 
   async send(): Promise<Blob> {

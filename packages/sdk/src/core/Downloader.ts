@@ -39,11 +39,11 @@ class Downloader {
     this.fileList = []
   }
 
-  on(name: string, fn: Function) {
+  public on(name: string, fn: Function) {
     this.event.on(name, fn)
   }
 
-  emit(name: string, ...args: any[]) {
+  public emit(name: string, ...args: any[]) {
     this.event.emit(name, ...args, this.fileList)
   }
 
@@ -66,7 +66,7 @@ class Downloader {
     tryCreateFile()
   }
 
-  addFile(file: FileContext) {
+  _addFile(file: FileContext) {
     if (!this.fileList.some((f) => f.id === file.id)) {
       this.fileList.push(file)
     }
