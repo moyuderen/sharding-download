@@ -21,6 +21,7 @@
     "下载进度",
     "暂停重试"
   ],
+  "license": "MIT",
   "author": "moyuderen",
   "homepage": "https://moyuderen.github.io/sharding-download/",
   "repository": {
