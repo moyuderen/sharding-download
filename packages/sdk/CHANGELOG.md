@@ -1,5 +1,11 @@
 # sharding-download
 
+## 1.2.6
+
+### Patch Changes
+
+- fix: renderSize default value
+
 ## 1.2.5
 
 ### Patch Changes
