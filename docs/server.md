@@ -4,7 +4,7 @@ outline: deep
 
 # 接口示例
 
-## 1. 获取文件元信息
+## 1. 获取文件元信息 {#meta}
 
 ### 基础信息
 
@@ -31,7 +31,7 @@ outline: deep
 }
 ```
 
-## 2. 获取文件流
+## 2. 获取文件流 {#download}
 
 ### 基础信息
 
@@ -112,3 +112,22 @@ keep-alive: timeout=5
 vary: Origin 
 x-powered-by: Express 
 ```
+
+## 3. Mock接口(vercel)
+
+### [swagger接口文档](https://sharding-download-server.vercel.app/api/)
+
+### baseUrl
+
+`https://sharding-download-server.vercel.app`
+
+### meta接口
+
+`GET: /api/file/getFileMeta/:filename`
+
+### download接口
+
+`POST: /api/file/download`
+
+> [!NOTE] 参考
+> 请求方式、参数、响应结果参考[`接口1`](#meta),[`接口2`](#download)
