@@ -12,39 +12,43 @@ export type RequestResponse = {
   headers: RequestHeaders
 }
 export type RequestOptions = {
+  /**
+   * 分片索引
+   */
+  index?: number
   /** 下载接口地址 */
   action: string
 
   /** 接口method类型 */
-  method: 'POST' | 'GET' | 'post' | 'get'
+  method?: 'POST' | 'GET' | 'post' | 'get'
 
   /** 自定义上传参数 */
   data: {
     url: string
-    index: number
+    index?: number
     [key: string]: any
   }
 
   /** 自定义headers */
   headers: {
-    Range: string
-    [key: string]: string
+    Range?: string
+    [key: string]: string | undefined
   }
 
   /** 接口返回类型 */
-  responseType: XMLHttpRequestResponseType
+  responseType?: XMLHttpRequestResponseType
 
   /** 跨域是否支持携带凭证 */
-  withCredentials: boolean
+  withCredentials?: boolean
 
   /** 下载进度回调 */
-  onProgress: (e: ProgressEvent) => void
+  onProgress?: (e: ProgressEvent) => void
 
   /** 下载成功回调 */
-  onSuccess: (response: RequestResponse) => void
+  onSuccess?: (response: RequestResponse) => void
 
   /** 下载失败回调 */
-  onFail: (request: any, error: Error) => void
+  onFail?: (error: Error, request?: any) => void
 }
 
 export type RequestReturn = {
@@ -77,15 +81,15 @@ export default function request(options: RequestOptions): RequestReturn {
     Object.entries(headers).forEach(([key, value]) => xhr.setRequestHeader(key, value as string))
   }
 
-  xhr.addEventListener('timeout', () => onFail(xhr, new Error('Request timed out')))
+  xhr.addEventListener('timeout', () => onFail(new Error('Request timed out'), xhr))
   xhr.addEventListener('progress', onProgress)
   xhr.addEventListener('error', () =>
-    onFail(xhr, new Error(`Request failed with status ${xhr.status}`))
+    onFail(new Error(`Request failed with status ${xhr.status}`), xhr)
   )
   xhr.addEventListener('readystatechange', () => {
     if (xhr.readyState !== 4) return
     if (xhr.status < 200 || xhr.status >= 300) {
-      onFail(xhr, new Error(`xhr: status === ${xhr.status}`))
+      onFail(new Error(`xhr: status === ${xhr.status}`), xhr)
       return
     }
     onSuccess({

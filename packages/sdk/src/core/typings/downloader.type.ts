@@ -1,3 +1,5 @@
+import type { Request } from '../request'
+
 export type DownloaderOptions = {
   /** IndexedDB version */
   storageVersion: number
@@ -33,7 +35,7 @@ export type DownloaderOptions = {
   /**
    * 自定义下载接口
    */
-  customRequest: Function
+  customRequest: Request
 
   /**
    * 最大自动重试次数
