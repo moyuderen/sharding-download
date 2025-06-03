@@ -31,9 +31,9 @@
   "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/types/index.d.ts",
       "require": "./dist/sharding-downloader.cjs.js",
-      "import": "./dist/sharding-downloader.es.js",
-      "types": "./dist/types/index.d.ts"
+      "import": "./dist/sharding-downloader.es.js"
     }
   },
   "files": [

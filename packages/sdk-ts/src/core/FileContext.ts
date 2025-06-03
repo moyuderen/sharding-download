@@ -95,7 +95,7 @@ class FileContext {
     const { customRequest, action, url } = this.options
     return new Promise((resolve, reject) => {
       this.metaAbort = customRequest({
-        action: `${action}?meta${false ? '&error=1' : ''}`,
+        action: `${action}?meta`,
         data: { url, index: -1 },
         headers: { Range: 'bytes=0-1' },
         onSuccess: async ({ headers, data }: RequestResponse) => {

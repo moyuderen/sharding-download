@@ -1,4 +1,4 @@
-type RequestHeaders = {
+export type RequestHeaders = {
   'content-length': string
   'content-range': string
   'content-disposition': string
@@ -51,6 +51,8 @@ export type RequestReturn = {
   abort: () => void
   canceled?: boolean
 }
+
+export type Request = typeof request
 
 export default function request(options: RequestOptions): RequestReturn {
   const {

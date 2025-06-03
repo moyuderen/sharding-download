@@ -24,6 +24,7 @@ export function debounce(callback: Function, wait = 1000, immediate = false) {
   return function (...args: any) {
     // 保存调用上下文和参数
     // @ts-ignore
+    // eslint-disable-next-line no-this-alias
     const context = this
 
     // 清除之前的定时器
