@@ -1,5 +1,11 @@
 # sharding-download
 
+## 1.3.0
+
+### Minor Changes (2025-06-03)
+
+- Add features: Users can customize `data` and `headers`
+
 ## 1.2.6
 
 ### Patch Changes
