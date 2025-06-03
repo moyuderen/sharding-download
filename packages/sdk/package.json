@@ -1,7 +1,7 @@
 {
   "name": "sharding-downloader",
   "private": false,
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "This project downloads files in the browser，Support large file sharding and IndexedDB（大文件分片下载）",
   "publishConfig": {
     "access": "public"

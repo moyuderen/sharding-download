@@ -1,5 +1,11 @@
 # sharding-download
 
+## 1.2.5
+
+### Patch Changes
+
+- export FileItem type
+
 ## 1.2.4
 
 ### Patch Changes
