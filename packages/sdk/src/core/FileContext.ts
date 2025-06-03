@@ -9,11 +9,11 @@ import type { RequestResponse } from './request'
 
 class FileContext {
   /** 配置 */
-  options: FileOptions
+  private options: FileOptions
   /** 下载实例 */
-  downloader: Downloader
+  private downloader: Downloader
   /** 存储store */
-  storage: Storage
+  private storage: Storage
   /** 文件id */
   id: string
   /** 文件名称 */
@@ -43,7 +43,7 @@ class FileContext {
   /** 已经下载chunk索引值 */
   downloaded: Set<number>
   /** 取消获取文件元信息abort */
-  metaAbort: null | { abort: () => void }
+  private metaAbort: null | { abort: () => void }
 
   constructor(options: FileOptions, downloader: Downloader) {
     this.options = options
@@ -299,3 +299,26 @@ class FileContext {
 }
 
 export default FileContext
+
+export type FileItem = Pick<
+  FileContext,
+  | 'id'
+  | 'chunkSize'
+  | 'link'
+  | 'loadedSize'
+  | 'progress'
+  | 'name'
+  | 'status'
+  | 'etag'
+  | 'size'
+  | 'url'
+  | 'loadedSize'
+  | 'totalChunks'
+  | 'renderSize'
+  | 'renderLoadedSize'
+  | 'resume'
+  | 'pause'
+  | 'retry'
+  | 'generateBlobUrl'
+  | 'revokeBlobUrl'
+>

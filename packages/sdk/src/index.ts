@@ -1,6 +1,6 @@
 import Downloader from './core/Downloader'
-import FileContext from './core/FileContext'
 import { Callbacks, FileStatus } from './core/constants'
+import type { FileItem } from './core/FileContext'
 export type { DownloaderOptions, UserDownloaderOptions } from './core/typings'
 export type {
   Request,
@@ -10,4 +10,4 @@ export type {
   RequestReturn
 } from './core/request'
 
-export { Downloader, FileContext, Callbacks, FileStatus }
+export { Downloader, Callbacks, FileStatus, FileItem }
