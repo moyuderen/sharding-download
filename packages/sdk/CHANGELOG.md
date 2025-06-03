@@ -1,5 +1,29 @@
 # sharding-download
 
+## 1.2.3
+
+### Patch Changes
+
+- export types
+
+## 1.2.2
+
+### Patch Changes
+
+- chore: 打包声明文件
+
+## 1.2.1
+
+### Patch Changes
+
+- fix: 默认db name和version
+
+## 1.2.0
+
+### Minor Changes
+
+- typescript 重构
+
 ## 1.1.0
 
 ### Minor Changes (2025-05-28)

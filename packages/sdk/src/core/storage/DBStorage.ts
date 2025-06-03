@@ -83,7 +83,7 @@ export default class IndexedDBWrapper {
     return new Promise((resolve, reject) => {
       const request = store.put(payload)
       request.onsuccess = () => {
-        console.log('Put successful -----')
+        console.log(`${chunkIndex} Put successful -----`)
         resolve(true)
       }
       request.onerror = () => reject(request.error)

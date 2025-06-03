@@ -1,7 +1,7 @@
 {
-  "name": "sharding-downloader.js",
+  "name": "sharding-downloader",
   "private": false,
-  "version": "1.1.0",
+  "version": "1.2.3",
   "description": "This project downloads files in the browser，Support large file sharding and IndexedDB（大文件分片下载）",
   "publishConfig": {
     "access": "public"
@@ -26,12 +26,14 @@
   "repository": {
     "url": "https://github.com/moyuderen/sharding-download"
   },
-  "module": "./dist/sharding-download.js",
-  "main": "./dist/sharding-download.umd.cjs",
+  "module": "./dist/sharding-downloader.es.js",
+  "main": "./dist/sharding-downloader.umd.js",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
-      "require": "./dist/sharding-download.umd.cjs",
-      "import": "./dist/sharding-download.js"
+      "types": "./dist/types/index.d.ts",
+      "require": "./dist/sharding-downloader.cjs.js",
+      "import": "./dist/sharding-downloader.es.js"
     }
   },
   "files": [
@@ -40,10 +42,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc && vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
-    "vite": "^6.2.0"
+    "typescript": "~5.7.2",
+    "vite": "^6.3.1",
+    "vite-plugin-dts": "^4.5.4"
   }
 }

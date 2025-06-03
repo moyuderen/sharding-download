@@ -1,20 +1,61 @@
 import Chunk from './Chunk'
-import { asyncPool, renderSize, generateUid, getFilenameFromDisposition } from './utils'
-import { FileStatus, Callbacks } from './constants.js'
+import Downloader from './Downloader'
+import Storage from './storage/Storage.ts'
+import { asyncPool, renderSize, generateUid, getFilenameFromDisposition } from '../helper/index'
+import { FileStatus, Callbacks } from './constants'
+import type { FileOptions } from './typings/index'
+import type { TypeFileStatus } from './constants'
+import type { RequestResponse } from './request'
 
-class File {
-  constructor(options, downloader) {
+class FileContext {
+  /** 配置 */
+  options: FileOptions
+  /** 下载实例 */
+  downloader: Downloader
+  /** 存储store */
+  storage: Storage
+  /** 文件id */
+  id: string
+  /** 文件名称 */
+  name: string
+  /** 文件大小 */
+  size: number
+  /** 文件唯一标识 */
+  etag: string
+  /** 文件状态 */
+  status: TypeFileStatus
+  /** 下载成功后生成的前端地址 */
+  link: string
+  /** 分片大小 */
+  chunkSize: number
+  /** 文件obs地址，或者文件下载标识 */
+  url: string
+  /** 下载接口 */
+  action: string
+  /** 文件下载进度 */
+  progress: number
+  /** 文件已经下载的大小（bit） */
+  loadedSize: number
+  /** 分片chunk数组 */
+  chunks: Chunk[]
+  /** 总分片数 */
+  totalChunks: number
+  /** 已经下载chunk索引值 */
+  downloaded: Set<number>
+  /** 取消获取文件元信息abort */
+  metaAbort: null | { abort: () => void }
+
+  constructor(options: FileOptions, downloader: Downloader) {
     this.options = options
     this.downloader = downloader
     this.storage = downloader.storage
 
     this.id = generateUid()
     this.name = ''
-    this.size = ''
+    this.size = 0
     this.etag = ''
     this.status = FileStatus.INIT
     this.link = ''
-
     this.chunkSize = options.chunkSize
     this.action = options.action
     this.url = options.url
@@ -37,7 +78,7 @@ class File {
     return renderSize(this.loadedSize)
   }
 
-  changeStatus(newStatus) {
+  changeStatus(newStatus: string) {
     this.status = newStatus
     this.downloader.emit(Callbacks.CHANGE, this)
   }
@@ -51,19 +92,19 @@ class File {
   }
 
   async getMetadata() {
-    const { request, action, url } = this.options
+    const { customRequest, action, url } = this.options
     return new Promise((resolve, reject) => {
-      this.metaAbort = request({
-        action: `${action}?meta${false ? '&error=1' : ''}`,
+      this.metaAbort = customRequest({
+        action: `${action}?meta`,
         data: { url, index: -1 },
         headers: { Range: 'bytes=0-1' },
-        onSuccess: async ({ headers, data }) => {
+        onSuccess: async ({ headers, data }: RequestResponse) => {
           if (!(await this.options.requestSucceed(data))) {
             throw new Error('Request failed')
           }
 
           try {
-            const name = getFilenameFromDisposition(headers['content-disposition'] || '')
+            const name = getFilenameFromDisposition(headers['content-disposition'])
             const size = Number(headers['content-range'].split('/')[1])
             const etag = headers['etag']
 
@@ -103,7 +144,17 @@ class File {
 
     if (!metadata || metadata.totalChunks !== this.totalChunks) {
       await this.storage.cleanupFileData(this.etag)
-      metadata = { downloadedChunks: [] }
+      metadata = {
+        fileId: this.etag,
+        fileName: this.name,
+        totalSize: this.size,
+        chunkSize: this.chunkSize,
+        totalChunks: this.totalChunks,
+        action: this.action,
+        url: this.url,
+        updateAt: Date.now(),
+        downloadedChunks: []
+      }
       await this.storage.updateMetadata(this, [])
     }
 
@@ -114,7 +165,7 @@ class File {
       await this.downloadChunks()
       this.changeStatus(FileStatus.DOWNLOADED)
       await this.mergeFilePart()
-    } catch (error) {
+    } catch (error: any) {
       this.changeStatus(FileStatus.FAILED)
       this.downloader.emit(Callbacks.FAILED, this)
       throw new Error(error)
@@ -122,7 +173,7 @@ class File {
   }
 
   async downloadChunks() {
-    await asyncPool(this.options.threads, this.chunks, async (chunk) => {
+    await asyncPool(this.options.threads, this.chunks, async (chunk: Chunk) => {
       const existing = await this.storage.checkChunk(this.etag, chunk.index)
       if (this.downloaded.has(chunk.index) && existing) {
         chunk.setSuccess()
@@ -149,16 +200,16 @@ class File {
   }
 
   async downloadFull() {
-    const { request, action, url } = this.options
-    request({
+    const { customRequest, action, url } = this.options
+    customRequest({
       action: action + '?full',
       data: { url, index: -2 },
-      onSuccess: async ({ data }) => {
+      onSuccess: async ({ data }: RequestResponse) => {
         if (!(await this.options.requestSucceed(data))) {
           throw new Error('Request failed')
         }
 
-        this.link = this.generateBlobUrl(data)
+        this.link = this.generateBlobUrl(data as Blob)
         this.progress = 1
         this.loadedSize = this.size
         this.changeStatus(FileStatus.SUCCESS)
@@ -168,7 +219,7 @@ class File {
         this.changeStatus(FileStatus.FAILED)
         this.downloader.emit(Callbacks.FAILED, this)
       },
-      onProgress: (e) => {
+      onProgress: (e: ProgressEvent) => {
         this.progress = e.loaded / e.total
         this.loadedSize = e.loaded
         this.changeStatus(FileStatus.DOWNLOADING)
@@ -207,10 +258,11 @@ class File {
     this.changeStatus(FileStatus.SUCCESS)
     this.downloader.emit(Callbacks.SUCCESS, this)
     this.storage.cleanupFileData(this.etag)
+
     chunks.length = 0
   }
 
-  generateBlobUrl(blob) {
+  generateBlobUrl(blob: Blob) {
     return window.URL.createObjectURL(blob)
   }
 
@@ -246,4 +298,4 @@ class File {
   }
 }
 
-export default File
+export default FileContext
