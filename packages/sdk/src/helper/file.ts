@@ -28,7 +28,7 @@ export const getFilenameFromDisposition = (disposition: string): string => {
 
 export const renderSize = (value: number | string) => {
   const ONE_KB = 1024
-  if (null === value || value === '') {
+  if (null === value || value === '' || value === 0) {
     return '0 B'
   }
   const unitArr = new Array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB')
