@@ -8,22 +8,22 @@ outline: deep
 
 手动重试
 
-```js
-const handleRetry = (file) => file.retry();
+```typescript
+const handleRetry = (file: FileItem) => file.retry();
 ```
 
 ## pause
 
 暂停下载
 
-```js
-const hanlePause = (file) => file.pause();
+```typescript
+const hanlePause = (file: FileItem) => file.pause();
 ```
 
 ## resume
 
 恢复下载
 
-```js
-const hanleResume = (file) => file.resume();
+```typescript
+const hanleResume = (file: FileItem) => file.resume();
 ```

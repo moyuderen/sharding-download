@@ -63,7 +63,7 @@ export default defineConfig({
               link: '/quick-start/function'
             },
             {
-              text: '说明',
+              text: '说明&接口',
               link: '/quick-start/detail'
             }
           ]

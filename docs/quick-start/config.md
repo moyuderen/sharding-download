@@ -2,7 +2,7 @@
 outline: deep
 ---
 
-# 参数配置
+# [参数配置](./detail#userdownloaderoptions)
 
 ## action
 
@@ -17,6 +17,22 @@ outline: deep
 > [!IMPORTANT]
 > 当`customRequest`配置了值时，`action`不会校验必填
 >
+
+## data
+
+用户自定义接口参数
+
+**类型** `Record<string, any>`
+
+**默认值** `{}`
+
+## headers
+
+用户自定义headers
+
+**类型** `Record<string, string>`
+
+**默认值** `{ 'content-type': 'application/json;charset=UTF-8' }`
 
 ## isPart
 
@@ -90,38 +106,14 @@ DB的name
 
 自定义请求, 函数需要返回一个`abort`方法来取消当前请求
 
-**类型** `null | (Options) => abort`
+**类型** `null | Request`, [Request类型](./detail#request)
 
 **默认值** `null`
 
 **示例**
 
 ```typescript
-type Headers = {
-    Range: string  // eg: `bytes=${chunk.stardByte}-${chunk.endByte}`
-}
-
-type SuccessResponse = {
-    data: Blob,
-    headers: {
-        'content-range': string,
-        'content-disposition': string,
-        'etag': string
-    },
-    [key: string]: any
-}
-
-type Options = {
-    action: string, // 下载文件的后端接口
-    data: { url: string }, // { url: string } 请求的的obs地址
-    headers: Headers // { Range: `bytes=${chunk.stardByte}-${chunk.endByte}`}
-    onSuccess: (response: SuccessResponse) => {},
-    onFail: () => {},
-    onProgress: (e) => {} // 下载进度 e.loaded 和 e.total
-}
-
-
-const customRequest = (options) => {
+const customRequest = (options: RequestOptions) => {
   const CancelToken = axios.CancelToken
   const source = CancelToken.source()
   const { data = {}, headers = {}, onProgress = noop, onSuccess = noop, onFail = noop } = options
@@ -133,7 +125,7 @@ const customRequest = (options) => {
       onProgress(progressEvent)
     },
   })
-    .then((response: SuccessResponse) => {
+    .then((response) => {
       onSuccess(response)
     })
     .catch((e) => {
@@ -153,12 +145,12 @@ const customRequest = (options) => {
 
 判断接口成功的方法
 
-**类型** `(SuccessResponse) => boolean`
+**类型** `(response: RequestResponse) => boolean`, [RequestResponse类型](./detail#request-info)
 
 **默认值**
 
-```js
-const requestSucceed = (response) => {
+```typescript
+const requestSucceed = (response: RequestResponse) => {
   const body = await getBody(response)
   if (body.code && body.code !== '00000') {
     return false
@@ -171,7 +163,7 @@ const requestSucceed = (response) => {
 
 ```js
  const requestSucceed = (response) => {
-    const data = await getBody(response) // 解析返回的二进制结果
+    const data = await getBody(response: RequestResponse) // 解析返回的二进制结果
     if (isBlob(data)) {
       return true
     } else {
