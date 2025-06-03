@@ -74,10 +74,7 @@ export default function request(options: RequestOptions): RequestReturn {
 
   // 'setRequestHeader' on 'XMLHttpRequest': The object's state must be OPENED
   if ('setRequestHeader' in xhr) {
-    Object.entries({
-      'content-type': 'application/json;charset=UTF-8',
-      ...headers
-    }).forEach(([key, value]) => xhr.setRequestHeader(key, value))
+    Object.entries(headers).forEach(([key, value]) => xhr.setRequestHeader(key, value as string))
   }
 
   xhr.addEventListener('timeout', () => onFail(xhr, new Error('Request timed out')))

@@ -1,30 +1,9 @@
-import request from './request'
 import FileContext from './FileContext'
 import Event from './Event'
 import Storage from './storage/Storage'
-import { getBody } from '../helper'
-import { Callbacks } from './constants'
-
+import { Callbacks, defaultsConfig } from './constants'
 import type { DownloaderOptions, UserDownloaderOptions } from './typings'
-
-const defaultsConfig: DownloaderOptions = {
-  storageVersion: 1,
-  storageName: 'file_chunks_db',
-  action: '',
-  chunkSize: 1024 * 1024 * 2,
-  threads: 6,
-  customRequest: request,
-  maxRetries: 3,
-  retryInterval: 500,
-  requestSucceed: async (data) => {
-    const body = await getBody(data)
-    if (body.code && body.code !== '00000') {
-      return false
-    }
-    return true
-  },
-  isPart: true
-}
+import { deepAssign } from '../helper'
 
 class Downloader {
   public options: DownloaderOptions
@@ -33,7 +12,7 @@ class Downloader {
   public fileList: FileContext[]
 
   constructor(options: UserDownloaderOptions) {
-    this.options = Object.assign(defaultsConfig, options)
+    this.options = deepAssign(defaultsConfig, options)
     this.event = new Event()
     this.storage = new Storage(this.options.storageVersion, this.options.storageName)
     this.fileList = []
@@ -48,7 +27,7 @@ class Downloader {
   }
 
   setOption(options: UserDownloaderOptions) {
-    this.options = Object.assign(this.options, options)
+    this.options = deepAssign(this.options, options)
     this.storage = new Storage(options.storageVersion, options.storageName)
   }
 

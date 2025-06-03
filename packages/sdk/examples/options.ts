@@ -6,7 +6,13 @@ export const customConfig = {
   maxRetries: 3,
   retryInterval: 500,
   storageVersion: 1,
-  storageName: 'file_chunks_db'
+  storageName: 'file_chunks_db',
+  data: {
+    name: 'moyuderen'
+  },
+  headers: {
+    authorization: 'Basic YWxhZGRpbjpvcGVuc2VzYW1l'
+  }
 }
 
 export const actionList = [

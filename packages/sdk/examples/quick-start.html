@@ -65,6 +65,12 @@
         <el-form-item label="storageName">
           <el-input v-model="config.storageName" clearable placeholder="default: file_chunks_db"/>
         </el-form-item>
+        <el-form-item label="data">
+          <el-input v-model="config.data.name" clearable placeholder=""/>
+        </el-form-item>
+        <el-form-item label="headers">
+          <el-input v-model="config.headers.authorization" clearable placeholder=""/>
+        </el-form-item>
       </el-form>
       <el-divider></el-divider>
       <el-button type="primary" size="default" @click="hanldeDownload">Sharding download</el-button>

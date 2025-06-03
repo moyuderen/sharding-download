@@ -12,6 +12,14 @@ export type DownloaderOptions = {
    */
   action: string
 
+  /** 自定义data */
+  data: Record<string, any>
+
+  /**
+   * 自定义headers
+   */
+  headers: Record<string, string>
+
   /**
    * 分片大小，单位是bit
    */

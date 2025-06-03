@@ -103,9 +103,14 @@ class Chunk {
       this.request = this.options.customRequest({
         index: this.index,
         action: `${this.options.action}?index=${this.index}${mockError(this.index) ? '&error=1' : ''}`,
-        data: { url: this.url, index: this.index },
+        data: {
+          url: this.url,
+          index: this.index,
+          ...this.options.data
+        },
         headers: {
-          Range: `bytes=${this.startByte}-${this.endByte}`
+          Range: `bytes=${this.startByte}-${this.endByte}`,
+          ...this.options.headers
         },
         onSuccess,
         onFail,

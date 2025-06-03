@@ -95,9 +95,16 @@ class FileContext {
     const { customRequest, action, url } = this.options
     return new Promise((resolve, reject) => {
       this.metaAbort = customRequest({
-        action: `${action}?meta`,
-        data: { url, index: -1 },
-        headers: { Range: 'bytes=0-1' },
+        action: `${action}?meta=`,
+        data: {
+          url,
+          index: -1,
+          ...this.options.data
+        },
+        headers: {
+          Range: 'bytes=0-1',
+          ...this.options.headers
+        },
         onSuccess: async ({ headers, data }: RequestResponse) => {
           if (!(await this.options.requestSucceed(data))) {
             throw new Error('Request failed')
@@ -203,7 +210,12 @@ class FileContext {
     const { customRequest, action, url } = this.options
     customRequest({
       action: action + '?full',
-      data: { url, index: -2 },
+      data: {
+        url,
+        index: -2,
+        ...this.options.data
+      },
+      headers: this.options.headers,
       onSuccess: async ({ data }: RequestResponse) => {
         if (!(await this.options.requestSucceed(data))) {
           throw new Error('Request failed')
