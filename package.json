@@ -10,7 +10,6 @@
     "docs:dev": "pnpm run -C docs docs:dev",
     "docs:build": "pnpm run -C docs docs:build",
     "sdk:dev": "pnpm run -C packages/sdk dev",
-    "sdk-ts:dev": "pnpm run -C packages/sdk-ts dev",
     "server:dev": "pnpm run -C server start:debug",
     "change": "pnpm changeset",
     "change-version": "pnpm changeset version",
