@@ -1,21 +1,46 @@
 import FileContext from '../FileContext'
-import type { FileMetadata, StorageChunk } from './Storage'
+import type { FileMetadata, StorageChunk, IStorage } from './Storage'
+import { buildMetadata } from './Storage'
 
 const EXPIRATION_TIME = 10 * 3600 * 1000 // 10 hour
 
-export default class IndexedDBWrapper {
+/**
+ * IndexedDB 数据结构:
+ *
+ * Database: file_chunks_db
+ *   ├── Object Store: chunks          // 分片数据
+ *   │     keyPath: [fileId, chunkIndex] (复合主键)
+ *   │     indexes:
+ *   │       - fileId   (non-unique, 按文件查询所有分片)
+ *   │       - updateAt (non-unique, 按时间清理过期数据)
+ *   │     记录结构: { fileId, chunkIndex, chunkSize, data: Blob, updateAt }
+ *   │
+ *   └── Object Store: metadata        // 文件元信息
+ *         keyPath: fileId
+ *         indexes:
+ *           - updateAt (non-unique, 按时间清理过期数据)
+ *         记录结构: { fileId, fileName, totalSize, chunkSize, totalChunks,
+ *                     action, url, downloadedChunks: number[], updateAt }
+ */
+
+export default class IndexedDBWrapper implements IStorage {
   public dbName: string
   public version: number
   public db: IDBDatabase | null
+  private initPromise: Promise<IDBDatabase> | null
 
   constructor(version = 1, dbName = 'file_chunks_db') {
     this.dbName = dbName
     this.version = version
     this.db = null
+    this.initPromise = null
   }
 
-  init() {
-    return new Promise((resolve, reject) => {
+  init(): Promise<IDBDatabase> {
+    if (this.db) return Promise.resolve(this.db)
+    if (this.initPromise) return this.initPromise
+
+    this.initPromise = new Promise((resolve, reject) => {
       const request = window.indexedDB.open(this.dbName, this.version)
       request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
         const db = (event.target as IDBOpenDBRequest).result
@@ -38,9 +63,11 @@ export default class IndexedDBWrapper {
       }
 
       request.onerror = (event: Event) => {
+        this.initPromise = null
         reject((event.target as IDBOpenDBRequest).error)
       }
     })
+    return this.initPromise
   }
 
   async transaction(storeName: 'chunks' | 'metadata', mode: IDBTransactionMode = 'readonly') {
@@ -50,26 +77,24 @@ export default class IndexedDBWrapper {
     return store
   }
 
-  async checkChunk(fileId: string, chunkIndex: number) {
+  async checkChunk(fileId: string, chunkIndex: number): Promise<boolean> {
     const store = await this.transaction('chunks', 'readonly')
 
     return new Promise((resolve, reject) => {
       const request = store.get([fileId, chunkIndex])
       request.onsuccess = () => {
-        // fix: 可能存在有chunk信息，但是data不存在
-        if (request.result && request.result.data) {
-          console.log(`✓ ${chunkIndex}`)
-          resolve(true)
-        } else {
+        if (!request.result?.data) {
           console.log(`✗ ${chunkIndex} ---`)
-          resolve(false)
+          return resolve(false)
         }
+        console.log(`✓ ${chunkIndex}`)
+        resolve(true)
       }
       request.onerror = () => reject(request.error)
     })
   }
 
-  async saveChunk(fileId: string, chunkIndex: number, chunkSize: number, chunkData: Blob) {
+  async saveChunk(fileId: string, chunkIndex: number, chunkSize: number, chunkData: Blob): Promise<StorageChunk> {
     const payload: StorageChunk = {
       fileId,
       chunkIndex,
@@ -84,41 +109,31 @@ export default class IndexedDBWrapper {
       const request = store.put(payload)
       request.onsuccess = () => {
         console.log(`${chunkIndex} Put successful -----`)
-        resolve(true)
+        resolve(payload)
       }
       request.onerror = () => reject(request.error)
     })
   }
 
-  async updateMetadata(file: FileContext, downloadedChunks: number[]) {
-    const metaPayload: FileMetadata = {
-      fileId: file.etag,
-      fileName: file.name,
-      totalSize: file.size,
-      chunkSize: file.chunkSize,
-      totalChunks: file.totalChunks,
-      action: file.action,
-      url: file.url,
-      downloadedChunks,
-      updateAt: Date.now()
-    }
+  async updateMetadata(file: FileContext, downloadedChunks: number[]): Promise<void> {
+    const metaPayload = buildMetadata(file, downloadedChunks)
 
     const store = await this.transaction('metadata', 'readwrite')
     return new Promise((resolve, reject) => {
       const request = store.put(metaPayload)
       request.onsuccess = () => {
-        resolve(request.result)
+        resolve()
       }
       request.onerror = (event) => reject((event.target as IDBRequest).error)
     })
   }
 
-  async getMetadata(fileId: string): Promise<FileMetadata> {
+  async getMetadata(fileId: string): Promise<FileMetadata | null> {
     const store = await this.transaction('metadata')
     return new Promise((resolve, reject) => {
       const request = store.get(fileId)
       request.onsuccess = () => {
-        resolve(request.result)
+        resolve(request.result ?? null)
       }
       request.onerror = (event) => reject((event.target as IDBRequest).error)
     })
@@ -134,7 +149,7 @@ export default class IndexedDBWrapper {
     })
   }
 
-  async cleanupFileData(fileId: string) {
+  async cleanupFileData(fileId: string): Promise<boolean> {
     // 开启事务（跨对象存储事务需要较新浏览器支持）
     await this.init()
     const transaction = this.db!.transaction(['chunks', 'metadata'], 'readwrite')
@@ -161,7 +176,7 @@ export default class IndexedDBWrapper {
     })
   }
 
-  async cleanupExpiredChunks() {
+  async cleanupExpiredChunks(): Promise<boolean> {
     const nowTime = Date.now()
 
     // 开启事务（跨对象存储事务需要较新浏览器支持）
@@ -204,10 +219,11 @@ export default class IndexedDBWrapper {
     })
   }
 
-  close() {
+  close(): void {
     if (this.db) {
       this.db.close()
       this.db = null
+      this.initPromise = null
     }
   }
 }

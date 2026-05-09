@@ -1,6 +1,6 @@
 import Chunk from './Chunk'
 import Downloader from './Downloader'
-import Storage from './storage/Storage.ts'
+import Storage, { buildMetadata } from './storage/Storage.ts'
 import { asyncPool, renderSize, generateUid, getFilenameFromDisposition } from '../helper/index'
 import { FileStatus, Callbacks } from './constants'
 import type { FileOptions } from './typings/index'
@@ -151,17 +151,7 @@ class FileContext {
 
     if (!metadata || metadata.totalChunks !== this.totalChunks) {
       await this.storage.cleanupFileData(this.etag)
-      metadata = {
-        fileId: this.etag,
-        fileName: this.name,
-        totalSize: this.size,
-        chunkSize: this.chunkSize,
-        totalChunks: this.totalChunks,
-        action: this.action,
-        url: this.url,
-        updateAt: Date.now(),
-        downloadedChunks: []
-      }
+      metadata = buildMetadata(this, [])
       await this.storage.updateMetadata(this, [])
     }
 

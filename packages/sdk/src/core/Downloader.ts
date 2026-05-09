@@ -28,6 +28,7 @@ class Downloader {
 
   setOption(options: UserDownloaderOptions) {
     this.options = deepAssign(this.options, options)
+    this.storage.close()
     this.storage = new Storage(options.storageVersion, options.storageName)
   }
 

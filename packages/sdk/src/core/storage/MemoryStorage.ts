@@ -1,39 +1,50 @@
 import FileContext from '../FileContext'
-import type { FileMetadata, StorageChunk } from './Storage'
+import type { FileMetadata, StorageChunk, IStorage } from './Storage'
+import { buildMetadata } from './Storage'
 
 const EXPIRATION_TIME = 10 * 3600 * 1000 // 10 hour
 
-// const store = {
-//   afe35b83ccd35635b9ea7dc49ba5808c282533499275c8c811da2138c90b5b38: {
-//     metadata: FileMetadata,
-//     chunksMap: {
-//       0: StorageChunk0,
-//       1: StorageChunk1
-//     }
-//   }
-// }
+/**
+ * MemoryStorage 数据结构:
+ *
+ * store = Map {
+ *   [fileId: string] => Map {
+ *     'metadata'  => FileMetadata          // 文件元信息
+ *     'chunksMap' => Map {                  // 分片数据
+ *       [chunkIndex: number] => StorageChunk
+ *     }
+ *   }
+ * }
+ *
+ * 示例:
+ * store = Map {
+ *   'afe35b83...' => Map {
+ *     'metadata'  => { fileId, fileName, totalSize, ... }
+ *     'chunksMap' => Map {
+ *       0 => { fileId, chunkIndex: 0, data: Blob, ... }
+ *       1 => { fileId, chunkIndex: 1, data: Blob, ... }
+ *     }
+ *   }
+ * }
+ */
 
-class MemoryStorage {
-  private store: Map<any, any>
+class MemoryStorage implements IStorage {
+  private store: Map<string, Map<string, any>>
+
   constructor() {
     this.store = new Map()
   }
 
-  checkChunk(fileId: string, chunkIndex: number) {
-    return new Promise((resolve) => {
-      const fileMap = this.store.get(fileId)
-      if (!fileMap) {
-        return resolve(false)
-      }
-      const chunks = fileMap.get('chunksMap')
-      if (!chunks) {
-        return resolve(false)
-      }
-      resolve(chunks.has(chunkIndex) && chunks.get(chunkIndex).data)
-    })
+  checkChunk(fileId: string, chunkIndex: number): Promise<boolean> {
+    const fileMap = this.store.get(fileId)
+    if (!fileMap) return Promise.resolve(false)
+    const chunks: Map<number, StorageChunk> = fileMap.get('chunksMap')
+    if (!chunks) return Promise.resolve(false)
+    const chunk = chunks.get(chunkIndex)
+    return Promise.resolve(!!(chunk && chunk.data))
   }
 
-  saveChunk(fileId: string, chunkIndex: number, chunkSize: number, chunkData: Blob) {
+  saveChunk(fileId: string, chunkIndex: number, chunkSize: number, chunkData: Blob): Promise<StorageChunk> {
     const payload: StorageChunk = {
       fileId,
       chunkIndex,
@@ -42,108 +53,79 @@ class MemoryStorage {
       updateAt: Date.now()
     }
 
-    return new Promise((resolve) => {
-      const fileMap = this.store.get(fileId) || new Map()
-      const chunks = fileMap.get('chunksMap') || new Map()
-      chunks.set(chunkIndex, payload)
-      fileMap.set('chunksMap', chunks)
+    let fileMap = this.store.get(fileId)
+    if (!fileMap) {
+      fileMap = new Map<string, any>()
       this.store.set(fileId, fileMap)
+    }
+    let chunks: Map<number, StorageChunk> = fileMap.get('chunksMap')
+    if (!chunks) {
+      chunks = new Map()
+      fileMap.set('chunksMap', chunks)
+    }
+    chunks.set(chunkIndex, payload)
 
-      resolve(payload)
-    })
+    return Promise.resolve(payload)
   }
 
-  updateMetadata(file: FileContext, downloadedChunks: number[]) {
-    const metaPayload: FileMetadata = {
-      fileId: file.etag,
-      fileName: file.name,
-      totalSize: file.size,
-      chunkSize: file.chunkSize,
-      totalChunks: file.totalChunks,
-      action: file.action,
-      url: file.url,
-      downloadedChunks,
-      updateAt: Date.now()
-    }
+  updateMetadata(file: FileContext, downloadedChunks: number[]): Promise<void> {
+    const metaPayload = buildMetadata(file, downloadedChunks)
 
-    const fileMap = this.store.get(metaPayload.fileId) || new Map()
+    let fileMap = this.store.get(metaPayload.fileId)
+    if (!fileMap) {
+      fileMap = new Map<string, any>()
+      this.store.set(metaPayload.fileId, fileMap)
+    }
     fileMap.set('metadata', metaPayload)
-    this.store.set(metaPayload.fileId, fileMap)
 
     return Promise.resolve()
   }
 
   getMetadata(fileId: string): Promise<FileMetadata | null> {
-    return new Promise((resolve) => {
-      const fileMap = this.store.get(fileId)
-      if (!fileMap) {
-        return resolve(null)
-      }
-      const metadata = fileMap.get('metadata')
-      if (!metadata) {
-        return resolve(null)
-      }
-      resolve(metadata)
-    })
+    const fileMap = this.store.get(fileId)
+    if (!fileMap) return Promise.resolve(null)
+    const metadata = fileMap.get('metadata')
+    if (!metadata) return Promise.resolve(null)
+    return Promise.resolve(metadata)
   }
 
   getChunks(fileId: string): Promise<StorageChunk[]> {
-    return new Promise((resolve) => {
-      const fileMap = this.store.get(fileId)
-      if (!fileMap) {
-        return resolve([])
-      }
-      const chunks = fileMap.get('chunksMap')
-      if (!chunks) {
-        return resolve([])
-      }
-      const chunkArray = Array.from(chunks.values()) as StorageChunk[]
-      resolve(chunkArray)
-    })
+    const fileMap = this.store.get(fileId)
+    if (!fileMap) return Promise.resolve([])
+    const chunks: Map<number, StorageChunk> = fileMap.get('chunksMap')
+    if (!chunks) return Promise.resolve([])
+    return Promise.resolve(Array.from(chunks.values()))
   }
 
-  cleanupFileData(fileId: string) {
-    return new Promise((resolve) => {
-      this.store.delete(fileId)
-      resolve(true)
-    })
+  cleanupFileData(fileId: string): Promise<boolean> {
+    this.store.delete(fileId)
+    return Promise.resolve(true)
   }
 
-  cleanupExpiredChunks() {
+  cleanupExpiredChunks(): Promise<boolean> {
     const now = Date.now()
 
-    return new Promise((resolve) => {
-      for (let fileMap of this.store.values()) {
-        const metadata = fileMap.get('metadata')
-        const fileId = metadata.fileId
-        if (!fileMap) {
-          continue
-        }
+    for (const [fileId, fileMap] of this.store.entries()) {
+      const metadata: FileMetadata | undefined = fileMap.get('metadata')
+      const chunks: Map<number, StorageChunk> | undefined = fileMap.get('chunksMap')
 
-        const chunks = fileMap.get('chunksMap')
-        if (!chunks) {
-          this.store.delete(fileId)
-          continue
-        }
-
+      if (chunks) {
         for (const [chunkIndex, chunk] of chunks.entries()) {
           if (now - chunk.updateAt > EXPIRATION_TIME) {
             chunks.delete(chunkIndex)
           }
         }
-
-        if (metadata) {
-          if (now - metadata.updateAt > EXPIRATION_TIME) {
-            this.store.delete(fileId)
-          }
-        }
       }
 
-      resolve(true)
-    })
+      if (metadata && now - metadata.updateAt > EXPIRATION_TIME) {
+        this.store.delete(fileId)
+      }
+    }
+
+    return Promise.resolve(true)
   }
 
-  close() {
+  close(): void {
     this.store.clear()
   }
 }

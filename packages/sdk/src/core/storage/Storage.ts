@@ -23,8 +23,33 @@ export type StorageChunk = {
   updateAt: number
 }
 
+export interface IStorage {
+  checkChunk(fileId: string, chunkIndex: number): Promise<boolean>
+  saveChunk(fileId: string, chunkIndex: number, chunkSize: number, chunkData: Blob): Promise<StorageChunk>
+  updateMetadata(file: FileContext, downloadedChunks: number[]): Promise<void>
+  getMetadata(fileId: string): Promise<FileMetadata | null>
+  getChunks(fileId: string): Promise<StorageChunk[]>
+  cleanupFileData(fileId: string): Promise<boolean>
+  cleanupExpiredChunks(): Promise<boolean>
+  close(): void
+}
+
+export function buildMetadata(file: FileContext, downloadedChunks: number[]): FileMetadata {
+  return {
+    fileId: file.etag,
+    fileName: file.name,
+    totalSize: file.size,
+    chunkSize: file.chunkSize,
+    totalChunks: file.totalChunks,
+    action: file.action,
+    url: file.url,
+    downloadedChunks,
+    updateAt: Date.now()
+  }
+}
+
 export default class DBWrapper {
-  public _store: IndexedDBWrapper | MemoryStorage
+  private _store: IStorage
   type: 'IndexedDB' | 'Memory'
 
   constructor(version = 1, dbName = 'file_chunks_db') {
@@ -61,8 +86,6 @@ export default class DBWrapper {
   }
 
   close() {
-    if (this._store) {
-      this._store.close()
-    }
+    this._store.close()
   }
 }
