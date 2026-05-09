@@ -230,6 +230,8 @@ Range: bytes=0-2097151
 
 ### 安装依赖
 
+在仓库根目录执行一次即可安装整个 workspace 的依赖：
+
 ```bash
 pnpm install
 ```
@@ -243,6 +245,9 @@ pnpm sdk:dev
 # 服务端开发 (端口 3100，热重载)
 pnpm server:dev
 
+# 服务端调试模式 (端口 3100，带 debug)
+pnpm server:debug
+
 # 文档站点开发 (端口 3300)
 pnpm docs:dev
 ```
@@ -254,26 +259,118 @@ pnpm docs:dev
 pnpm sdk:build
 
 # 构建服务端
-cd server && pnpm build
+pnpm server:build
 
 # 构建文档
 pnpm docs:build
+
+# 一次构建整个仓库
+pnpm build
+```
+
+### 预览
+
+```bash
+# 预览文档站点 (端口 3400)
+pnpm docs:preview
 ```
 
 ### 发布
 
-项目使用 [Changesets](https://github.com/changesets/changesets) 管理版本：
+项目使用 [Changesets](https://github.com/changesets/changesets) 管理版本。
+
+当前仓库里：
+- 真正发布到 npm 的包是 `packages/sdk` 下的 `sharding-downloader`
+- 根目录 `package.json` 只是工作区脚本入口，不会发布
+- `server/` 和 `docs/` 目前也不是 npm 发布目标
+
+#### 什么时候需要写 changeset
+
+需要写 changeset 的情况：
+- SDK 对外能力有变化，比如新增功能、修复 bug、调整类型定义
+- SDK 的使用方式、导出内容、默认行为发生变化
+
+通常不需要写 changeset 的情况：
+- 只改文档
+- 只改示例服务端 `server/`
+- 只改本地开发脚本，但不影响 npm 包 `sharding-downloader`
+
+#### 版本号怎么选
+
+- `patch`：修复问题、小优化，不影响现有使用方式
+- `minor`：向下兼容的新功能
+- `major`：有破坏性变更，升级后用户可能需要改代码
+
+#### 日常开发时怎么管理 changeset
+
+当你改了 SDK，并且这些改动将来要发到 npm：
 
 ```bash
-# 1. 创建变更记录
+# 1. 先写变更记录
 pnpm change
+```
 
-# 2. 更新版本号
+执行后建议这样选：
+- 包：选择 `sharding-downloader`
+- 版本类型：按 `patch / minor / major` 选择
+- 说明：写清楚“用户拿到这个版本后会感知到什么变化”
+
+然后把生成出来的 `.changeset/*.md` 文件和代码一起提交。
+
+#### 正式发版流程
+
+当你确认这次改动准备发布时，按这个顺序执行：
+
+```bash
+# 1. 根据 changeset 更新版本号和 changelog
 pnpm change-version
 
-# 3. 构建并发布到 npm
-pnpm push-npm
+# 2. 先本地确认能正常构建
+pnpm sdk:build
+# 或
+pnpm build
+
+# 3. 发布 SDK 到 npm
+pnpm sdk:publish
 ```
+
+其中：
+- `pnpm change-version` 会更新版本信息，并写入 changelog
+- `pnpm sdk:publish` 是真正发包的命令
+- 如果你想更稳一点，发版前可以先跑一遍 `pnpm build`
+
+#### 最短记忆版
+
+如果你只想记一套最短流程，可以直接记下面这几步：
+
+```bash
+# 开发完成后，先记录这次改动
+pnpm change
+
+# 准备发布时，更新版本号
+pnpm change-version
+
+# 检查能不能正常构建
+pnpm sdk:build
+
+# 发布到 npm
+pnpm sdk:publish
+```
+
+#### 发版前自检清单
+
+建议发版前快速确认下面几点：
+- 这次改动确实影响的是 `sharding-downloader`，而不是只有 docs/server
+- 对应的 `.changeset/*.md` 已经存在
+- 版本类型没有选错（尤其是 `patch` / `minor` / `major`）
+- 本地至少跑通了 `pnpm sdk:build`
+- 已经登录 npm，并且当前账号有这个包的发布权限
+
+#### 一句话记忆
+
+- `pnpm change`：记录这次改了什么
+- `pnpm change-version`：把记录真正写进版本号和 changelog
+- `pnpm sdk:publish`：把 SDK 发到 npm
 
 ## 线上 Demo
 

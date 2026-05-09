@@ -3,18 +3,28 @@
   "version": "1.0.0",
   "private": true,
   "description": "",
-  "workspaces": [
-    "packages/*"
-  ],
+  "packageManager": "pnpm@10.12.1",
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=8"
+  },
   "scripts": {
+    "build": "pnpm sdk:build && pnpm server:build && pnpm docs:build",
     "docs:dev": "pnpm run -C docs docs:dev",
     "docs:build": "pnpm run -C docs docs:build",
+    "docs:preview": "pnpm run -C docs docs:preview",
     "sdk:dev": "pnpm run -C packages/sdk dev",
     "sdk:build": "pnpm run -C packages/sdk build",
-    "server:dev": "pnpm run -C server start:debug",
+    "server:dev": "pnpm run -C server start:dev",
+    "server:debug": "pnpm run -C server start:debug",
+    "server:build": "pnpm run -C server build",
+    "server:start": "pnpm run -C server start",
+    "server:start:prod": "pnpm run -C server start:prod",
+    "server:test": "pnpm run -C server test",
+    "server:lint": "pnpm run -C server lint",
     "change": "pnpm changeset",
     "change-version": "pnpm changeset version",
-    "push-npm": "pnpm install && pnpm -F sharding-downloader build && pnpm -F sharding-downloader publish"
+    "sdk:publish": "pnpm -F sharding-downloader build && pnpm -F sharding-downloader publish"
   },
   "keywords": [],
   "author": "",
