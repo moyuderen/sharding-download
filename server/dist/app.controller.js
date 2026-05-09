@@ -12,22 +12,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const app_service_1 = require("./app.service");
 let AppController = class AppController {
-    constructor(appService) {
-        this.appService = appService;
-    }
     async index() {
-        return 'Hello, Sharding Download Server !';
+        return 'healthy';
     }
 };
 exports.AppController = AppController;
 __decorate([
-    (0, common_1.Get)('hello'),
-    (0, swagger_1.ApiOperation)({ summary: '测试服务是否启动成功' }),
+    (0, common_1.Get)('healthy'),
+    (0, swagger_1.ApiOperation)({ summary: '健康检查，确认服务正常启动' }),
     (0, swagger_1.ApiResponse)({
         status: 200,
-        description: 'Hello, Sharding Download Server !',
+        description: 'healthy',
     }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -35,7 +31,6 @@ __decorate([
 ], AppController.prototype, "index", null);
 exports.AppController = AppController = __decorate([
     (0, swagger_1.ApiTags)('App'),
-    (0, common_1.Controller)(),
-    __metadata("design:paramtypes", [app_service_1.AppService])
+    (0, common_1.Controller)()
 ], AppController);
 //# sourceMappingURL=app.controller.js.map

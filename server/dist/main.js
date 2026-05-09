@@ -7,10 +7,13 @@ const app_module_1 = require("./app.module");
 const path_1 = require("path");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
-    const port = 3100;
+    const port = Number(process.env.PORT || 3100);
     app.setGlobalPrefix('api');
+    app.useGlobalPipes(new common_1.ValidationPipe({
+        transform: true,
+    }));
     app.enableCors({
-        origin(origin, callback) {
+        origin(_origin, callback) {
             callback(null, true);
         },
         credentials: true,
@@ -31,8 +34,10 @@ async function bootstrap() {
     });
     app.useStaticAssets((0, path_1.join)(__dirname, '..', 'public'), {
         prefix: '/static',
-        setHeaders: (res, path) => {
-            console.log(`[${new Date().toISOString()}] 提供静态文件: ${path}`);
+        setHeaders: (_res, path) => {
+            if (process.env.DEBUG_STATIC_ASSETS === 'true') {
+                console.log(`[${new Date().toISOString()}] 提供静态文件: ${path}`);
+            }
         },
     });
     common_1.Logger.debug(`Nest.js server started on port ${port}.`, 'Bootstrap');

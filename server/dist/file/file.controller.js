@@ -11,54 +11,65 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var FileController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FileController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const fs_1 = require("fs");
 const file_service_1 = require("./file.service");
 const share_1 = require("../share");
 const file_dto_1 = require("./file.dto");
-let FileController = class FileController {
+let FileController = FileController_1 = class FileController {
     constructor(fileService) {
         this.fileService = fileService;
+        this.logger = new common_1.Logger(FileController_1.name);
     }
     async getFileMetadata(filename, res) {
-        const filePath = this.fileService.getSafePath(filename);
-        const stats = (0, fs_1.statSync)(filePath);
-        const eTag = await this.fileService.generateETag(filename);
-        res
-            .set({
-            'Content-Length': stats.size,
-            ETag: eTag,
-            'Last-Modified': stats.mtime.toISOString(),
-        })
-            .json({
-            size: stats.size,
-            eTag,
-            lastModified: stats.mtime.toISOString(),
-            name: filename,
-        });
+        try {
+            const { filePath, stats } = await this.fileService.validateFile(filename);
+            const eTag = await this.fileService.getETag(filePath, stats);
+            res
+                .set({
+                'Content-Length': stats.size,
+                ETag: eTag,
+                'Last-Modified': stats.mtime.toISOString(),
+            })
+                .json({
+                size: stats.size,
+                eTag,
+                lastModified: stats.mtime.toISOString(),
+                name: filename,
+            });
+        }
+        catch (error) {
+            this.handleControllerError(error, res);
+        }
     }
     async downloadFile(postData, headers, res, error) {
         const { url: filename } = postData;
+        let fileSize;
         if (error === '1') {
             res.status(200).json({ code: '00003', message: '模拟下载失败' });
             return;
         }
         try {
             const { filePath, stats } = await this.fileService.validateFile(filename);
+            fileSize = stats.size;
             const range = headers.range;
             if (!range) {
                 return this.fileService.sendFullFile(res, filePath, filename, stats);
             }
             await (0, share_1.sleep)();
-            return this.fileService.handleRangeRequest(res, filename, filePath, range, stats.size);
+            return this.fileService.handleRangeRequest(res, filename, filePath, range, stats);
         }
         catch (error) {
-            console.log(error);
-            this.fileService.handleDownloadError(error, res);
+            this.handleControllerError(error, res, fileSize);
         }
+    }
+    handleControllerError(error, res, fileSize) {
+        const normalizedError = error instanceof Error ? error : new Error('Unknown error');
+        this.logger.error(normalizedError.message, normalizedError.stack);
+        this.fileService.handleDownloadError(normalizedError, res, fileSize);
     }
 };
 exports.FileController = FileController;
@@ -180,10 +191,10 @@ __decorate([
     __param(2, (0, common_1.Res)()),
     __param(3, (0, common_1.Query)('error')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object, Object, String]),
+    __metadata("design:paramtypes", [file_dto_1.DownloadDto, Object, Object, String]),
     __metadata("design:returntype", Promise)
 ], FileController.prototype, "downloadFile", null);
-exports.FileController = FileController = __decorate([
+exports.FileController = FileController = FileController_1 = __decorate([
     (0, swagger_1.ApiTags)('分片下载相关'),
     (0, common_1.Controller)('file'),
     __metadata("design:paramtypes", [file_service_1.FileService])

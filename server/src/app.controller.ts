@@ -1,19 +1,16 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AppService } from './app.service';
 
 @ApiTags('App')
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
-
-  @Get('hello')
-  @ApiOperation({ summary: '测试服务是否启动成功' })
+  @Get('healthy')
+  @ApiOperation({ summary: '健康检查，确认服务正常启动' })
   @ApiResponse({
     status: 200,
-    description: 'Hello, Sharding Download Server !',
+    description: 'healthy',
   })
   async index() {
-    return 'Hello, Sharding Download Server !';
+    return 'healthy';
   }
 }

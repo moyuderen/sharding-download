@@ -7,6 +7,7 @@ import {
   Post,
   Body,
   Query,
+  Logger,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,7 +19,6 @@ import {
   ApiHeader,
 } from '@nestjs/swagger';
 import { Response } from 'express';
-import { statSync } from 'fs';
 import { FileService } from './file.service';
 import { sleep } from '../share';
 import { DownloadDto } from './file.dto';
@@ -26,6 +26,8 @@ import { DownloadDto } from './file.dto';
 @ApiTags('分片下载相关')
 @Controller('file')
 export class FileController {
+  private readonly logger = new Logger(FileController.name);
+
   constructor(private readonly fileService: FileService) {}
 
   @Get('getFileMeta/:filename')
@@ -50,22 +52,25 @@ export class FileController {
     @Param('filename') filename: string,
     @Res() res: Response,
   ) {
-    const filePath = this.fileService.getSafePath(filename);
-    const stats = statSync(filePath);
-    const eTag = await this.fileService.generateETag(filename);
+    try {
+      const { filePath, stats } = await this.fileService.validateFile(filename);
+      const eTag = await this.fileService.getETag(filePath, stats);
 
-    res
-      .set({
-        'Content-Length': stats.size,
-        ETag: eTag,
-        'Last-Modified': stats.mtime.toISOString(),
-      })
-      .json({
-        size: stats.size,
-        eTag,
-        lastModified: stats.mtime.toISOString(),
-        name: filename,
-      });
+      res
+        .set({
+          'Content-Length': stats.size,
+          ETag: eTag,
+          'Last-Modified': stats.mtime.toISOString(),
+        })
+        .json({
+          size: stats.size,
+          eTag,
+          lastModified: stats.mtime.toISOString(),
+          name: filename,
+        });
+    } catch (error) {
+      this.handleControllerError(error, res);
+    }
   }
 
   @Post('download')
@@ -157,12 +162,14 @@ export class FileController {
     description: '系统错误',
   })
   async downloadFile(
-    @Body() postData: { url: string; index: number },
+    @Body() postData: DownloadDto,
     @Headers() headers: Record<string, string>,
     @Res() res: Response,
     @Query('error') error: string,
   ) {
     const { url: filename } = postData;
+    let fileSize: number | undefined;
+
     if (error === '1') {
       res.status(200).json({ code: '00003', message: '模拟下载失败' });
       return;
@@ -170,9 +177,9 @@ export class FileController {
 
     try {
       const { filePath, stats } = await this.fileService.validateFile(filename);
+      fileSize = stats.size;
       const range = headers.range;
 
-      // 处理完整文件下载
       if (!range) {
         return this.fileService.sendFullFile(res, filePath, filename, stats);
       }
@@ -184,11 +191,21 @@ export class FileController {
         filename,
         filePath,
         range,
-        stats.size,
+        stats,
       );
     } catch (error) {
-      console.log(error);
-      this.fileService.handleDownloadError(error, res);
+      this.handleControllerError(error, res, fileSize);
     }
+  }
+
+  private handleControllerError(
+    error: unknown,
+    res: Response,
+    fileSize?: number,
+  ) {
+    const normalizedError =
+      error instanceof Error ? error : new Error('Unknown error');
+    this.logger.error(normalizedError.message, normalizedError.stack);
+    this.fileService.handleDownloadError(normalizedError, res, fileSize);
   }
 }
