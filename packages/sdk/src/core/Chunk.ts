@@ -30,7 +30,7 @@ class Chunk {
   /**  */
   public request: any
   /** 重试间隔计时器 */
-  public timer: undefined | number
+  public timer: ReturnType<typeof setTimeout> | undefined
   /** 下载进度 */
   public progress: number
   /** 已下载大小 */

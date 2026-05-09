@@ -1,4 +1,4 @@
-import { isSupportIndexedDB } from '../../helper'
+import { supportsIndexedDB } from '../../helper'
 import MemoryStorage from './MemoryStorage'
 import IndexedDBWrapper from './DBStorage'
 import FileContext from '../FileContext'
@@ -28,8 +28,8 @@ export default class DBWrapper {
   type: 'IndexedDB' | 'Memory'
 
   constructor(version = 1, dbName = 'file_chunks_db') {
-    this._store = isSupportIndexedDB ? new IndexedDBWrapper(version, dbName) : new MemoryStorage()
-    this.type = isSupportIndexedDB ? 'IndexedDB' : 'Memory'
+    this._store = supportsIndexedDB ? new IndexedDBWrapper(version, dbName) : new MemoryStorage()
+    this.type = supportsIndexedDB ? 'IndexedDB' : 'Memory'
   }
 
   async checkChunk(fileId: string, chunkIndex: number) {

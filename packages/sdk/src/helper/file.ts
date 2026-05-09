@@ -1,4 +1,14 @@
-import { isBlob, isObject } from './type-test'
+import { isBinaryData, isObject } from './type-test'
+
+const textDecoder = new TextDecoder()
+
+const decodeBinaryData = async (binaryData: Blob | ArrayBuffer | ArrayBufferView) => {
+  if (typeof Blob !== 'undefined' && binaryData instanceof Blob) {
+    return binaryData.text()
+  }
+
+  return textDecoder.decode(binaryData as ArrayBuffer | ArrayBufferView)
+}
 
 export const getFilenameFromDisposition = (disposition: string): string => {
   if (!disposition) return ''
@@ -41,10 +51,10 @@ export const renderSize = (value: number | string) => {
 }
 
 export const getBody = async (response: any) => {
-  if (isBlob(response)) {
+  if (isBinaryData(response)) {
     try {
-      const responseBlobStr = await response.text()
-      const responseData = JSON.parse(responseBlobStr)
+      const responseText = await decodeBinaryData(response)
+      const responseData = JSON.parse(responseText)
       return responseData
     } catch {
       return response

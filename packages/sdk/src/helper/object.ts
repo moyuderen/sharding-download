@@ -1,31 +1,39 @@
-import { isPlainObject } from './type-test'
-type UserObject = any
+import { isMergeableObject } from './type-test'
 
-export const hasOwnProperty = (source: UserObject, key: string) =>
+type ObjectRecord = Record<string, unknown>
+
+export const hasOwnProperty = (source: object, key: PropertyKey) =>
   Object.prototype.hasOwnProperty.call(source, key)
 
-export function deepAssign<T, U>(target: T, source: U): T & U {
-  if (!isPlainObject(source) || !isPlainObject(target)) {
-    return source as T & U
+const cloneValue = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map(cloneValue)
   }
 
-  // 创建 target 的深拷贝以避免修改原始对象
-  const result: any = Array.isArray(target) ? [...target] : { ...target }
+  if (isMergeableObject(value)) {
+    return deepAssign({}, value as ObjectRecord)
+  }
 
-  // 遍历 source 的所有键
-  for (const key in source) {
-    if (hasOwnProperty(source, key)) {
-      const sourceVal = source[key]
-      const targetVal = result[key]
+  return value
+}
 
-      // 如果 source 的值是对象（非数组且非 null）
-      if (isPlainObject(sourceVal) && !Array.isArray(sourceVal)) {
-        result[key] = deepAssign(targetVal, sourceVal)
-      } else {
-        // 直接赋值（包括数组、基本类型、null 等）
-        result[key] = sourceVal
-      }
-    }
+export function deepAssign<T extends ObjectRecord, U extends ObjectRecord>(
+  target: T,
+  source: U
+): T & U {
+  const result: ObjectRecord = {}
+
+  for (const key of Object.keys(target)) {
+    result[key] = cloneValue(target[key])
+  }
+
+  for (const key of Object.keys(source)) {
+    const sourceVal = source[key]
+    const targetVal = result[key]
+
+    result[key] = isMergeableObject(targetVal) && isMergeableObject(sourceVal)
+      ? deepAssign(targetVal as ObjectRecord, sourceVal as ObjectRecord)
+      : cloneValue(sourceVal)
   }
 
   return result as T & U

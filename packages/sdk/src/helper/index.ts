@@ -19,7 +19,7 @@ export const throttle = (fn: Function, wait = 300) => {
 }
 
 export function debounce(callback: Function, wait = 1000, immediate = false) {
-  let timeoutId: number | null
+  let timeoutId: ReturnType<typeof setTimeout> | null
 
   return function (...args: any) {
     // 保存调用上下文和参数
@@ -48,7 +48,7 @@ export function debounce(callback: Function, wait = 1000, immediate = false) {
 }
 
 export * from './file'
-export * from './support'
+export * from './browser-support'
 export * from './type-test'
 export * from './asyn-pool'
 export * from './object'
