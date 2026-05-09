@@ -1,13 +1,18 @@
-export async function asyncPool(poolLimit = 6, iterator: any[], iteratorFn: Function) {
-  const ret = [] // 存储所有任务的Promise
-  const executing = new Set() // 追踪执行中的任务
+export async function asyncPool<T, R>(
+  poolLimit: number,
+  iterator: T[],
+  iteratorFn: (item: T, list: T[]) => Promise<R>
+): Promise<R[]> {
+  const limit = poolLimit || 6
+  const ret: Promise<R>[] = []
+  const executing = new Set<Promise<unknown>>()
 
-  for (const [index, element] of Array.from(iterator.entries())) {
-    // 创建任务Promise并记录索引
+  for (let index = 0; index < iterator.length; index++) {
+    const element = iterator[index]
+
     const itemPromise = (async () => {
       try {
-        const res = await iteratorFn(element, iterator)
-        return res // 确保返回结果
+        return await iteratorFn(element, iterator)
       } catch (error: any) {
         const augmentedError: any = new Error(`[AsyncPool] Task ${index} failed: ${error.message}`)
         augmentedError.cause = error
@@ -18,55 +23,34 @@ export async function asyncPool(poolLimit = 6, iterator: any[], iteratorFn: Func
 
     ret[index] = itemPromise
 
-    // 创建清理函数用于任务完成后移除自己
     const taskPromise = itemPromise.finally(() => {
       executing.delete(taskPromise)
     })
+    // 防止 taskPromise 的拒绝成为 unhandled rejection，错误已通过 Promise.allSettled(ret) 统一收集
+    taskPromise.catch(() => {})
 
     executing.add(taskPromise)
 
-    // 动态扩容逻辑
-    if (executing.size >= poolLimit) {
+    if (executing.size >= limit) {
       try {
         await Promise.race(executing)
       } catch {
-        //
+        // 单个任务的错误由 Promise.allSettled 收集，此处仅用于释放并发槽位
       }
-
-      // 网络空闲期自动提升并发数
-      // if (navigator.connection?.downlink > 5) {
-      //   poolLimit = Math.min(poolLimit + 2, 8)
-      // }
     }
   }
 
-  // 等待所有剩余任务完成
-  try {
-    await Promise.allSettled(executing)
-    const settledResults = await Promise.allSettled(ret)
-    const errors = settledResults
-      .filter((result) => result.status === 'rejected')
-      .map((result) => result.reason)
+  const settledResults = await Promise.allSettled(ret)
+  const errors = settledResults
+    .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+    .map((r) => r.reason)
 
-    const errorsIndex = errors.map((item) => item.index)
-
-    if (errors.length > 0) {
-      throw new AggregateError(
-        errors,
-        `\n
-        [AsyncPool] 部分任务执行失败 (失败数: ${errors.length}/${ret.length}); 
-        \n
-        [Error Tasks]: [${errorsIndex}]}
-        `
-      )
-    }
-
-    // 返回所有成功的结果
-    return settledResults.map((result) => {
-      if (result.status === 'fulfilled') return result.value
-      throw result.reason
-    })
-  } catch (error: any) {
-    throw new Error(error)
+  if (errors.length > 0) {
+    throw new AggregateError(
+      errors,
+      `[AsyncPool] 部分任务执行失败 (失败数: ${errors.length}/${ret.length})`
+    )
   }
+
+  return (settledResults as PromiseFulfilledResult<R>[]).map((r) => r.value)
 }
