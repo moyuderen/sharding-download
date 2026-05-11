@@ -2,7 +2,7 @@ import { ChunkStatus } from './constants'
 import { throttle } from '../helper'
 import FileContext from './FileContext'
 import type { FileOptions } from './typings'
-import { RequestResponse } from './request'
+import type { RequestResponse, RequestReturn } from './request'
 
 class Chunk {
   /** chunk所在file的实例 */
@@ -27,8 +27,8 @@ class Chunk {
   public status: string
   /** 重试次数 */
   public maxRetries: number
-  /**  */
-  public request: any
+  /** 当前请求实例 */
+  public request: RequestReturn | null
   /** 重试间隔计时器 */
   public timer: ReturnType<typeof setTimeout> | undefined
   /** 下载进度 */
@@ -116,8 +116,6 @@ class Chunk {
         onFail,
         onProgress: this.handleProgress
       })
-
-      this.request.canceled = false
     })
   }
 

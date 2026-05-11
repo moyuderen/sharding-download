@@ -137,6 +137,7 @@ const customRequest = (options: RequestOptions) => {
     abort() {
       source.cancel('Operation canceled by the user.')
     },
+    canceled: false,
   }
 }
 ```

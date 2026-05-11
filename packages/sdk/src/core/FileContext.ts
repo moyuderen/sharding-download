@@ -44,6 +44,8 @@ class FileContext {
   downloaded: Set<number>
   /** 取消获取文件元信息abort */
   private metaAbort: null | { abort: () => void }
+  /** 整文件下载abort */
+  private fullAbort: null | { abort: () => void }
 
   constructor(options: FileOptions, downloader: Downloader) {
     this.options = options
@@ -66,6 +68,7 @@ class FileContext {
     this.totalChunks = 0
     this.downloaded = new Set()
     this.metaAbort = null
+    this.fullAbort = null
 
     this.start()
   }
@@ -198,7 +201,7 @@ class FileContext {
 
   private async downloadFull() {
     const { customRequest, action, url } = this.options
-    customRequest({
+    this.fullAbort = customRequest({
       action: action + '?full',
       data: {
         url,
@@ -278,6 +281,10 @@ class FileContext {
     this.chunks.forEach((chunk) => {
       chunk.cancel()
     })
+    if (this.fullAbort) {
+      this.fullAbort.abort()
+      this.fullAbort = null
+    }
   }
 
   public pause() {

@@ -129,8 +129,8 @@ class Chunk {
   status: string;
   /** 重试次数 */
   maxRetries: number;
-  /**  */
-  request: any;
+  /** 当前请求实例 */
+  request: RequestReturn | null;
   /** 重试间隔计时器 */
   timer: undefined | number;
   /** 下载进度 */
@@ -178,7 +178,7 @@ type RequestOptions = {
   /** 自定义上传参数 */
   data: {
       url: string;
-      index: number;
+      index?: number;
       [key: string]: any;
   };
   /** 自定义headers */
@@ -186,6 +186,8 @@ type RequestOptions = {
       Range?: string;
       [key: string]: string | undefined;
   };
+  /** 超时时间（毫秒），0 表示不超时 */
+  timeout?: number;
   /** 接口返回类型 */
   responseType?: XMLHttpRequestResponseType;
   /** 跨域是否支持携带凭证 */
@@ -195,7 +197,7 @@ type RequestOptions = {
   /** 下载成功回调 */
   onSuccess?: (response: RequestResponse) => void;
   /** 下载失败回调 */
-  onFail?: (request: any, error: Error) => void;
+  onFail?: (error: Error, request?: XMLHttpRequest) => void;
 };
 
 ```
@@ -211,15 +213,15 @@ type RequestHeaders = {
   [key: string]: string | undefined;
 };
 
-type RequestResponse = {
-  data: Blob | object;
+type RequestResponse<T = Blob> = {
+  data: T;
   status: number;
   headers: RequestHeaders;
 };
 
 type RequestReturn = {
   abort: () => void;
-  canceled?: boolean;
+  canceled: boolean;
 };
 ```
 
