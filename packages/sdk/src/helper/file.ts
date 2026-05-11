@@ -53,3 +53,14 @@ export const getBody = async (response: unknown): Promise<unknown> => {
   }
   return response
 }
+
+export const resolveProgress = (
+  event: ProgressEvent,
+  fallbackTotal: number,
+  currentProgress: number
+) => {
+  const total = event.lengthComputable && event.total > 0 ? event.total : fallbackTotal
+  if (total <= 0) return currentProgress
+  return Math.min(Math.max(event.loaded / total, currentProgress), 1)
+}
+

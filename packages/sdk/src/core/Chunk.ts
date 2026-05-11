@@ -1,5 +1,5 @@
 import { ChunkStatus } from './constants'
-import { throttle } from '../helper'
+import { appendActionQuery, resolveProgress, throttle } from '../helper'
 import FileContext from './FileContext'
 import type { FileOptions } from './typings'
 import type { RequestResponse, RequestReturn } from './request'
@@ -57,7 +57,7 @@ class Chunk {
 
   handleProgress = throttle((e: ProgressEvent) => {
     this.loaded = e.loaded
-    this.progress = Math.min(Math.max(e.loaded / e.total, this.progress), 1)
+    this.progress = resolveProgress(e, this.size, this.progress)
     this.status = ChunkStatus.DOWNLOADING
     this.parent._updateProgress()
   }, 200)
@@ -102,7 +102,10 @@ class Chunk {
 
       this.request = this.options.customRequest({
         index: this.index,
-        action: `${this.options.action}?index=${this.index}${mockError(this.index) ? '&error=1' : ''}`,
+        action: appendActionQuery(
+          this.options.action,
+          `index=${this.index}${mockError(this.index) ? '&error=1' : ''}`
+        ),
         data: {
           url: this.url,
           index: this.index,

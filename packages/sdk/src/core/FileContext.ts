@@ -1,7 +1,7 @@
 import Chunk from './Chunk'
 import Downloader from './Downloader'
 import Storage, { buildMetadata } from './storage/Storage.ts'
-import { asyncPool, renderSize, generateUid, getFilenameFromDisposition } from '../helper/index'
+import { asyncPool, renderSize, generateUid, getFilenameFromDisposition, resolveProgress, appendActionQuery } from '../helper/index'
 import { FileStatus, Callbacks } from './constants'
 import type { FileOptions } from './typings/index'
 import type { TypeFileStatus } from './constants'
@@ -98,7 +98,7 @@ class FileContext {
     const { customRequest, action, url } = this.options
     return new Promise((resolve, reject) => {
       this.metaAbort = customRequest({
-        action: `${action}?meta=`,
+        action: appendActionQuery(action, 'meta='),
         data: {
           url,
           index: -1,
@@ -202,7 +202,7 @@ class FileContext {
   private async downloadFull() {
     const { customRequest, action, url } = this.options
     this.fullAbort = customRequest({
-      action: action + '?full',
+      action: appendActionQuery(action, 'full'),
       data: {
         url,
         index: -2,
@@ -225,7 +225,7 @@ class FileContext {
         this.downloader.emit(Callbacks.FAILED, this)
       },
       onProgress: (e: ProgressEvent) => {
-        this.progress = e.loaded / e.total
+        this.progress = resolveProgress(e, this.size, this.progress)
         this.loadedSize = e.loaded
         this.changeStatus(FileStatus.DOWNLOADING)
         this.downloader.emit(Callbacks.PROGRESS, this)
