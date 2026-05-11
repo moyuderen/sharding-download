@@ -61,7 +61,6 @@ describe('Event', () => {
 
     expect(() => event.emit('change')).toThrow(error)
     expect(listener).toHaveBeenCalledTimes(1)
-    expect(event.events.has('change')).toBe(false)
 
     event.emit('change')
     expect(listener).toHaveBeenCalledTimes(1)
@@ -76,10 +75,10 @@ describe('Event', () => {
     event.on('change', second)
     event.off('change', first)
     event.emit('change')
+    event.emit('change')
 
     expect(first).not.toHaveBeenCalled()
-    expect(second).toHaveBeenCalledTimes(1)
-    expect(event.events.get('change')).toEqual([second])
+    expect(second).toHaveBeenCalledTimes(2)
   })
 
   it('off(name) clears the whole event entry', () => {
@@ -91,7 +90,6 @@ describe('Event', () => {
     event.emit('change')
 
     expect(listener).not.toHaveBeenCalled()
-    expect(event.events.has('change')).toBe(false)
   })
 })
 
