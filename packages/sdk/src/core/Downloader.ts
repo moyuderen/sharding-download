@@ -34,7 +34,7 @@ class Downloader {
 
   async start(url: string) {
     if (typeof url !== 'string' || !url.trim()) {
-      this.emit(Callbacks.FAILED, null, this.fileList)
+      this.emit(Callbacks.FAILED, null)
       throw new Error('A valid URL is required')
     }
 

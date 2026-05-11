@@ -15,22 +15,29 @@ export default class Event {
     }
   }
 
-  off(name: string, callback: Function) {
+  off(name: string, callback?: Function) {
     if (!this.events.has(name)) return
 
     if (!callback) {
-      this.events.set(name, [])
+      this.events.delete(name)
       return
     }
 
     const callbacks = this.events.get(name)?.filter((cb) => cb !== callback) as Function[]
-    this.events.set(name, callbacks)
+    if (callbacks.length) {
+      this.events.set(name, callbacks)
+      return
+    }
+
+    this.events.delete(name)
   }
 
   emit(name: string, ...args: any[]) {
     const callbacks = this.events.get(name)
-    if (callbacks && callbacks.length) {
-      callbacks.forEach((cb) => cb(...args))
+    if (callbacks?.length) {
+      for (const callback of [...callbacks]) {
+        callback(...args)
+      }
     }
   }
 
@@ -38,8 +45,11 @@ export default class Event {
     if (typeof callback !== 'function') return
 
     const onceCallback = (...args: any[]) => {
-      callback(...args)
-      this.off(name, onceCallback)
+      try {
+        callback(...args)
+      } finally {
+        this.off(name, onceCallback)
+      }
     }
     this.on(name, onceCallback)
   }
