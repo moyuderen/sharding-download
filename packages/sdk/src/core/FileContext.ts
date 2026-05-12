@@ -1,6 +1,6 @@
 import Chunk from './Chunk'
 import Downloader from './Downloader'
-import Storage, { buildMetadata } from './storage/Storage.ts'
+import { buildMetadata } from './storage/Storage.ts'
 import { asyncPool, renderSize, generateUid, getFilenameFromDisposition, resolveProgress, appendActionQuery } from '../helper/index'
 import { FileStatus, Callbacks } from './constants'
 import type { FileOptions } from './typings/index'
@@ -12,8 +12,10 @@ class FileContext {
   private options: FileOptions
   /** 下载实例 */
   private downloader: Downloader
-  /** 存储store */
-  private storage: Storage
+
+  private get storage() {
+    return this.downloader.storage
+  }
   /** 文件id */
   id: string
   /** 文件名称 */
@@ -50,7 +52,6 @@ class FileContext {
   constructor(options: FileOptions, downloader: Downloader) {
     this.options = options
     this.downloader = downloader
-    this.storage = downloader.storage
 
     this.id = generateUid()
     this.name = ''
@@ -137,12 +138,16 @@ class FileContext {
       await this.getMetadata()
       this.changeStatus(FileStatus.READY)
       this.downloader._addFile(this)
-      this.options.isPart ? this.downloadPart() : this.downloadFull()
+      this.executeDownload()
     } catch (error) {
       console.error('Error:', error)
       this.downloader.emit(Callbacks.FAILED, this)
       throw new Error('Failed to start download')
     }
+  }
+
+  private async executeDownload() {
+    this.options.isPart ? this.downloadPart() : this.downloadFull()
   }
 
   private async downloadPart() {
@@ -302,7 +307,7 @@ class FileContext {
       if (this.metaAbort) {
         this.metaAbort.abort()
       }
-      this.start()
+      this.executeDownload()
     }
   }
 }

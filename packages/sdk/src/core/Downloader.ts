@@ -1,7 +1,7 @@
 import FileContext from './FileContext'
 import Event from './Event'
 import Storage from './storage/Storage'
-import { Callbacks, defaultsConfig } from './constants'
+import { Callbacks, FileStatus, defaultsConfig } from './constants'
 import type { DownloaderOptions, UserDownloaderOptions } from './typings'
 import { deepAssign } from '../helper'
 
@@ -27,6 +27,11 @@ class Downloader {
   }
 
   setOption(options: UserDownloaderOptions) {
+    this.fileList.forEach((f) => {
+      if (f.status === FileStatus.DOWNLOADING) {
+        f.cancel()
+      }
+    })
     this.options = deepAssign(this.options, options)
     this.storage.close()
     this.storage = new Storage(options.storageVersion, options.storageName)
