@@ -142,6 +142,26 @@ const customRequest = (options: RequestOptions) => {
 }
 ```
 
+## mockErrorChunks
+
+模拟指定 chunk 索引下载失败，用于测试重试逻辑
+
+**类型** `number[]`
+
+**默认值** `[]`
+
+**示例**
+
+```typescript
+const downloader = new Downloader({
+  mockErrorChunks: [0, 3, 5] // chunk 0、3、5 会模拟下载失败
+})
+```
+
+> [!NOTE]
+> 仅用于开发/测试环境，生产环境请勿配置
+>
+
 ## requestSucceed
 
 判断接口成功的方法

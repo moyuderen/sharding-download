@@ -58,6 +58,11 @@ export type DownloaderOptions = {
    * 是否分片下载
    */
   isPart: boolean
+
+  /**
+   * 模拟指定 chunk 索引下载失败，用于测试重试逻辑
+   */
+  mockErrorChunks?: number[]
 }
 
 export type UserDownloaderOptions = Partial<DownloaderOptions>

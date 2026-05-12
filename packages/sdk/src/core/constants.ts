@@ -22,7 +22,8 @@ export const defaultsConfig: DownloaderOptions = {
     }
     return true
   },
-  isPart: true
+  isPart: true,
+  mockErrorChunks: []
 }
 
 export const FileStatus = {

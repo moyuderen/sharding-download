@@ -96,8 +96,7 @@ class Chunk {
       }
 
       const mockError = (index: number) => {
-        // const list = Math.random() > 0.5 ? [0] : []
-        return ([] as number[]).includes(index)
+        return (this.options.mockErrorChunks ?? []).includes(index)
       }
 
       this.request = this.options.customRequest({
