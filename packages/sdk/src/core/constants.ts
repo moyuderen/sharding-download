@@ -10,13 +10,13 @@ export const defaultsConfig: DownloaderOptions = {
   headers: {
     'content-type': 'application/json;charset=UTF-8'
   },
-  chunkSize: 1024 * 1024 * 2,
+  chunkSize: 2 * 1024 * 1024,
   threads: 6,
   customRequest: request,
   maxRetries: 3,
   retryInterval: 500,
   requestSucceed: async (data) => {
-    const body = await getBody(data)
+    const body = await getBody(data) as Record<string, any>
     if (body.code && body.code !== '00000') {
       return false
     }
@@ -34,7 +34,7 @@ export const FileStatus = {
   CANCELLED: 'cancelled',
   SUCCESS: 'success',
   FAILED: 'failed'
-}
+} as const
 
 export const ChunkStatus = {
   READY: 'ready',
@@ -42,14 +42,14 @@ export const ChunkStatus = {
   DOWNLOADING: 'downloading',
   DOWNLOADED: 'downloaded',
   ERROR: 'error'
-}
+} as const
 
 export const Callbacks = {
   FAILED: 'failed',
   PROGRESS: 'progress',
   SUCCESS: 'success',
   CHANGE: 'change',
-  CANCELLED: 'canceled'
-}
+  CANCELLED: 'cancelled'
+} as const
 
 export type TypeFileStatus = (typeof FileStatus)[keyof typeof FileStatus]

@@ -82,7 +82,7 @@ class FileContext {
     return renderSize(this.loadedSize)
   }
 
-  private changeStatus(newStatus: string) {
+  private changeStatus(newStatus: TypeFileStatus) {
     this.status = newStatus
     this.downloader.emit(Callbacks.CHANGE, this)
   }

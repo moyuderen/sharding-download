@@ -151,7 +151,7 @@ export const FileStatus = {
   CANCELLED: 'cancelled',
   SUCCESS: 'success',
   FAILED: 'failed'
-}
+} as const
 
 export const ChunkStatus = {
   READY: 'ready',
@@ -159,7 +159,7 @@ export const ChunkStatus = {
   DOWNLOADING: 'downloading',
   DOWNLOADED: 'downloaded',
   ERROR: 'error'
-}
+} as const
 
 ```
 

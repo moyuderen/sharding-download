@@ -11,8 +11,9 @@ export const Callbacks = {
   FAILED: 'failed',
   PROGRESS: 'progress',
   SUCCESS: 'success',
-  CHANGE: 'change'
-}
+  CHANGE: 'change',
+  CANCELLED: 'cancelled'
+} as const
 ```
 
 ## change
@@ -53,5 +54,15 @@ downloader.on(Callbacks.FAILED, (file: FileItem, fileList: FileItem[]) => {
 ```typescript
 downloader.on(Callbacks.PROGRESS, (file: FileItem, fileList: FileItem[]) => {
   console.log('progress', file.progress)
+});
+```
+
+## cancelled
+
+下载取消时触发, [FileItem类型](./detail#file-item)
+
+```typescript
+downloader.on(Callbacks.CANCELLED, (file: FileItem, fileList: FileItem[]) => {
+  console.log('cancelled', file);
 });
 ```
