@@ -1,3 +1,8 @@
+type AsyncPoolTaskError = Error & {
+  cause?: unknown
+  index?: number
+}
+
 export async function asyncPool<T, R>(
   poolLimit: number,
   iterator: T[],
@@ -14,7 +19,9 @@ export async function asyncPool<T, R>(
       try {
         return await iteratorFn(element, iterator)
       } catch (error: any) {
-        const augmentedError: any = new Error(`[AsyncPool] Task ${index} failed: ${error.message}`)
+        const augmentedError: AsyncPoolTaskError = new Error(
+          `[AsyncPool] Task index ${index} failed: ${error.message}`
+        )
         augmentedError.cause = error
         augmentedError.index = index
         throw augmentedError
@@ -43,12 +50,19 @@ export async function asyncPool<T, R>(
   const settledResults = await Promise.allSettled(ret)
   const errors = settledResults
     .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-    .map((r) => r.reason)
+    .map((r) => r.reason as AsyncPoolTaskError)
 
   if (errors.length > 0) {
+    const failedIndexes = errors
+      .map((error) => error.index)
+      .filter((index): index is number => index !== undefined)
+    const failedIndexMessage = failedIndexes.length > 0
+      ? `, failed indexes: ${failedIndexes.join(', ')}`
+      : ''
+
     throw new AggregateError(
       errors,
-      `[AsyncPool] 部分任务执行失败 (失败数: ${errors.length}/${ret.length})`
+      `[AsyncPool] 部分任务执行失败 (失败数: ${errors.length}/${ret.length}${failedIndexMessage})`
     )
   }
 
