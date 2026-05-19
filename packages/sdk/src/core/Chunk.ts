@@ -4,6 +4,13 @@ import FileContext from './FileContext'
 import type { FileOptions } from './typings'
 import type { RequestResponse, RequestReturn } from './request'
 
+export class ChunkCanceledError extends Error {
+  constructor() {
+    super('Chunk request was canceled')
+    this.name = 'ChunkCanceledError'
+  }
+}
+
 class Chunk {
   /** chunk所在file的实例 */
   public parent: FileContext
@@ -67,7 +74,10 @@ class Chunk {
 
     return new Promise((resolve, reject) => {
       const onFail = (e: any) => {
-        if (this.request && this.request.canceled) return
+        if (this.request && this.request.canceled) {
+          reject(new ChunkCanceledError())
+          return
+        }
 
         if (this.maxRetries > 0) {
           this.maxRetries--

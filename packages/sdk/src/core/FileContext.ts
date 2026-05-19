@@ -1,4 +1,4 @@
-import Chunk from './Chunk'
+import Chunk, { ChunkCanceledError } from './Chunk'
 import Downloader from './Downloader'
 import { buildMetadata } from './storage/Storage.ts'
 import { asyncPool, renderSize, generateUid, getFilenameFromDisposition, resolveProgress, appendActionQuery } from '../helper/index'
@@ -150,6 +150,18 @@ class FileContext {
     this.options.isPart ? this.downloadPart() : this.downloadFull()
   }
 
+  private isCanceledChunkError(error: unknown): boolean {
+    if (error instanceof ChunkCanceledError) {
+      return true
+    }
+
+    if (error instanceof AggregateError) {
+      return error.errors.every((item) => this.isCanceledChunkError((item as Error & { cause?: unknown }).cause ?? item))
+    }
+
+    return false
+  }
+
   private async downloadPart() {
     await this.storage.cleanupExpiredChunks()
     console.log('Cleanup expired chunks success')
@@ -168,9 +180,15 @@ class FileContext {
 
     try {
       await this.downloadChunks()
+      if (this.status === FileStatus.CANCELLED) {
+        return
+      }
       this.changeStatus(FileStatus.DOWNLOADED)
       await this.mergeFilePart()
     } catch (error: any) {
+      if (this.status === FileStatus.CANCELLED && this.isCanceledChunkError(error)) {
+        return
+      }
       this.changeStatus(FileStatus.FAILED)
       this.downloader.emit(Callbacks.FAILED, this)
       throw new Error(error)
