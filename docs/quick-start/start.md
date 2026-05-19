@@ -6,6 +6,38 @@
 npm i sharding-downloader
 ```
 
+## 本地开发
+
+如果你是在这个仓库里本地联调 SDK 示例页和示例服务端，先在仓库根目录安装依赖：
+
+```bash
+pnpm install
+```
+
+一键启动本地联调：
+
+```bash
+pnpm dev
+```
+
+默认会同时启动：
+
+- SDK 示例页：`http://localhost:3201`
+- 示例服务端：`http://localhost:3100`
+
+如果你需要分别启动，也可以使用：
+
+```bash
+pnpm sdk:dev
+pnpm server:dev
+```
+
+文档站点仍然单独启动：
+
+```bash
+pnpm docs:dev
+```
+
 ## 使用
 
 ```javascript

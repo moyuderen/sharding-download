@@ -9,6 +9,7 @@
     "pnpm": ">=8"
   },
   "scripts": {
+    "dev": "pnpm --parallel --filter sharding-downloader --filter server run dev",
     "build": "pnpm sdk:build && pnpm server:build && pnpm docs:build",
     "docs:dev": "pnpm run -C docs docs:dev",
     "docs:build": "pnpm run -C docs docs:build",
