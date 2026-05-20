@@ -8,22 +8,54 @@ const app = Vue.createApp({
   setup() {
     const currentUrl = ref('711.jpg')
     const options = ref(urlOptions)
-    const config = reactive(customConfig)
     const link = ref('')
     const downloadFileList = ref([])
 
-    const downloader = new Downloader({
-      ...config,
-      chunkSize: config.chunkSize * 1024 * 1024
+    const headersJson = ref(JSON.stringify(customConfig.headers, null, 2))
+    const dataJson = ref(JSON.stringify(customConfig.data, null, 2))
+    const headersError = ref('')
+    const dataError = ref('')
+
+    const config = reactive({
+      action: customConfig.action,
+      method: customConfig.method || 'POST',
+      isPart: customConfig.isPart,
+      chunkSize: customConfig.chunkSize,
+      threads: customConfig.threads,
+      maxRetries: customConfig.maxRetries,
+      retryInterval: customConfig.retryInterval,
+      timeout: customConfig.timeout || 0,
+      withCredentials: customConfig.withCredentials !== false,
+      storageVersion: customConfig.storageVersion,
+      storageName: customConfig.storageName
     })
 
+    const tryParseJson = (jsonRef, errorRef, label) => {
+      try {
+        const value = JSON.parse(jsonRef.value)
+        errorRef.value = ''
+        return value
+      } catch {
+        errorRef.value = `${label} JSON 格式错误`
+        return {}
+      }
+    }
+
+    const buildDownloaderOptions = () => ({
+      ...config,
+      chunkSize: config.chunkSize * 1024 * 1024,
+      headers: tryParseJson(headersJson, headersError, 'headers'),
+      data: tryParseJson(dataJson, dataError, 'data')
+    })
+
+    const downloader = new Downloader(buildDownloaderOptions())
+
     downloader.on(Callbacks.CHANGE, (file, fileList) => {
-      // console.log('------ change status', file.status)
       downloadFileList.value = [...fileList]
     })
 
-    downloader.on(Callbacks.SUCCESS, (file, _fileList) => {
-      console.log('sucess', file.link)
+    downloader.on(Callbacks.SUCCESS, (file) => {
+      console.log('success', file.link)
       link.value = file.link
     })
 
@@ -32,16 +64,15 @@ const app = Vue.createApp({
     })
 
     downloader.on(Callbacks.PROGRESS, (_file, _fileList) => {
-      // console.log('progress', file.progress, fileList)
+      // progress updates
     })
 
-    const hanldeDownload = async () => {
+    const handleDownload = async () => {
       link.value = ''
       downloader.start(currentUrl.value)
     }
 
-    const openFile = async (file) => {
-      console.log('open file', file)
+    const openFile = (file) => {
       window.open(file.link, '_blank')
     }
 
@@ -49,31 +80,37 @@ const app = Vue.createApp({
       file.retry()
     }
 
-    const hanlePause = (file) => file.pause()
-    const hanleResume = (file) => file.resume()
+    const handlePause = (file) => file.pause()
+    const handleResume = (file) => file.resume()
 
-    const customColorMethod = (status) => {
-      const colorMap = {
-        [FileStatus.READY]: '#409eff',
-        [FileStatus.DOWNLOADING]: '#409eff',
-        [FileStatus.SUCCESS]: '#67c23a',
-        [FileStatus.FAILED]: '#f56c6c'
+    const tagType = (status) => {
+      const map = {
+        [FileStatus.READY]: '',
+        [FileStatus.INIT]: 'info',
+        [FileStatus.DOWNLOADING]: '',
+        [FileStatus.DOWNLOADED]: 'success',
+        [FileStatus.SUCCESS]: 'success',
+        [FileStatus.FAILED]: 'danger',
+        [FileStatus.CANCELLED]: 'warning'
       }
-      return colorMap[status] || '#409eff'
+      return map[status] || 'info'
+    }
+
+    const progressColor = (percentage) => {
+      if (percentage >= 100) return '#67c23a'
+      return '#409eff'
     }
 
     watch(
-      () => config,
-      (newVal) => {
-        downloader.setOption({
-          ...newVal,
-          chunkSize: newVal.chunkSize * 1024 * 1024
-        })
-      },
-      {
-        deep: true
+      [() => config.action, () => config.method, () => config.isPart, () => config.chunkSize,
+       () => config.threads, () => config.maxRetries, () => config.retryInterval,
+       () => config.timeout, () => config.withCredentials, () => config.storageVersion,
+       () => config.storageName, headersJson, dataJson],
+      () => {
+        downloader.setOption(buildDownloaderOptions())
       }
     )
+
     return {
       FileStatus,
       currentUrl,
@@ -82,12 +119,17 @@ const app = Vue.createApp({
       actionList,
       link,
       downloadFileList,
-      hanldeDownload,
+      headersJson,
+      dataJson,
+      headersError,
+      dataError,
+      handleDownload,
       openFile,
       handleRetry,
-      hanlePause,
-      hanleResume,
-      customColorMethod
+      handlePause,
+      handleResume,
+      tagType,
+      progressColor
     }
   }
 })

@@ -6,6 +6,7 @@ export const defaultsConfig: DownloaderOptions = {
   storageVersion: 1,
   storageName: 'file_chunks_db',
   action: '',
+  method: 'POST',
   data: {},
   headers: {
     'content-type': 'application/json;charset=UTF-8'
@@ -15,6 +16,8 @@ export const defaultsConfig: DownloaderOptions = {
   customRequest: request,
   maxRetries: 3,
   retryInterval: 500,
+  timeout: 0,
+  withCredentials: true,
   requestSucceed: async (data) => {
     const body = await getBody(data) as Record<string, any>
     if (body.code && body.code !== '00000') {

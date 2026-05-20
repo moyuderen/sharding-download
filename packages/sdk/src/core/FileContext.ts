@@ -87,6 +87,11 @@ class FileContext {
     this.downloader.emit(Callbacks.CHANGE, this)
   }
 
+  private fail() {
+    this.changeStatus(FileStatus.FAILED)
+    this.downloader.emit(Callbacks.FAILED, this)
+  }
+
   private createChunks() {
     this.chunks = []
     this.totalChunks = Math.ceil(this.size / this.options.chunkSize)
@@ -100,6 +105,7 @@ class FileContext {
     return new Promise((resolve, reject) => {
       this.metaAbort = customRequest({
         action: appendActionQuery(action, 'meta='),
+        method: this.options.method,
         data: {
           url,
           index: -1,
@@ -109,12 +115,15 @@ class FileContext {
           Range: 'bytes=0-1',
           ...this.options.headers
         },
+        timeout: this.options.timeout,
+        withCredentials: this.options.withCredentials,
         onSuccess: async ({ headers, data }: RequestResponse) => {
-          if (!(await this.options.requestSucceed(data))) {
-            throw new Error('Request failed')
-          }
-
           try {
+            if (!(await this.options.requestSucceed(data))) {
+              reject(new Error('Request failed'))
+              return
+            }
+
             const name = getFilenameFromDisposition(headers['content-disposition'])
             const size = Number(headers['content-range'].split('/')[1])
             const etag = headers['etag']
@@ -141,7 +150,7 @@ class FileContext {
       this.executeDownload()
     } catch (error) {
       console.error('Error:', error)
-      this.downloader.emit(Callbacks.FAILED, this)
+      this.fail()
       throw new Error('Failed to start download')
     }
   }
@@ -189,8 +198,7 @@ class FileContext {
       if (this.isCanceledChunkError(error)) {
         return
       }
-      this.changeStatus(FileStatus.FAILED)
-      this.downloader.emit(Callbacks.FAILED, this)
+      this.fail()
       throw new Error(error)
     }
   }
@@ -226,26 +234,34 @@ class FileContext {
     const { customRequest, action, url } = this.options
     this.fullAbort = customRequest({
       action: appendActionQuery(action, 'full'),
+      method: this.options.method,
       data: {
         url,
         index: -2,
         ...this.options.data
       },
       headers: this.options.headers,
+      timeout: this.options.timeout,
+      withCredentials: this.options.withCredentials,
       onSuccess: async ({ data }: RequestResponse) => {
-        if (!(await this.options.requestSucceed(data))) {
-          throw new Error('Request failed')
-        }
+        try {
+          if (!(await this.options.requestSucceed(data))) {
+            this.fail()
+            return
+          }
 
-        this.link = this.generateBlobUrl(data as Blob)
-        this.progress = 1
-        this.loadedSize = this.size
-        this.changeStatus(FileStatus.SUCCESS)
-        this.downloader.emit(Callbacks.SUCCESS, this)
+          this.link = this.generateBlobUrl(data as Blob)
+          this.progress = 1
+          this.loadedSize = this.size
+          this.changeStatus(FileStatus.SUCCESS)
+          this.downloader.emit(Callbacks.SUCCESS, this)
+        } catch (e) {
+          console.error('Error in downloadFull onSuccess:', e)
+          this.fail()
+        }
       },
       onFail: () => {
-        this.changeStatus(FileStatus.FAILED)
-        this.downloader.emit(Callbacks.FAILED, this)
+        this.fail()
       },
       onProgress: (e: ProgressEvent) => {
         this.progress = resolveProgress(e, this.size, this.progress)
@@ -278,7 +294,11 @@ class FileContext {
     this.loadedSize = this.size
     const chunks = await this.storage.getChunks(this.etag)
     chunks.sort((a, b) => a.chunkIndex - b.chunkIndex)
-    // console.log(`${this.name} AllChunks: `, chunks, this)
+
+    if (chunks.length === 0) {
+      throw new Error('No chunks found to merge')
+    }
+
     const blob = new Blob(
       chunks.map((chunk) => chunk.data),
       { type: chunks[0].data.type || 'application/octet-stream' }

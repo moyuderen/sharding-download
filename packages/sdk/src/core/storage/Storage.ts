@@ -51,8 +51,12 @@ export function buildMetadata(file: FileContext, downloadedChunks: number[]): Fi
 export default class DBWrapper {
   private _store: IStorage
   type: 'IndexedDB' | 'Memory'
+  version: number
+  name: string
 
   constructor(version = 1, dbName = 'file_chunks_db') {
+    this.version = version
+    this.name = dbName
     this._store = supportsIndexedDB ? new IndexedDBWrapper(version, dbName) : new MemoryStorage()
     this.type = supportsIndexedDB ? 'IndexedDB' : 'Memory'
   }

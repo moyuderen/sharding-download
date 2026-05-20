@@ -14,6 +14,11 @@ export type DownloaderOptions = {
    */
   action: string
 
+  /**
+   * HTTP 方法
+   */
+  method: 'POST' | 'GET'
+
   /** 自定义data */
   data: Record<string, any>
 
@@ -46,6 +51,16 @@ export type DownloaderOptions = {
    * 重试间隔时间，单位是ms
    */
   retryInterval: number
+
+  /**
+   * 请求超时时间（毫秒），0 表示不超时
+   */
+  timeout: number
+
+  /**
+   * 跨域是否支持携带凭证
+   */
+  withCredentials: boolean
 
   /**
    * 接口成功判断逻辑，返回true为接口成功

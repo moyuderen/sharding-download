@@ -33,8 +33,14 @@ class Downloader {
       }
     })
     this.options = deepAssign(this.options, options)
-    this.storage.close()
-    this.storage = new Storage(options.storageVersion, options.storageName)
+
+    const storageChanged =
+      (options.storageVersion !== undefined && options.storageVersion !== this.storage.version) ||
+      (options.storageName !== undefined && options.storageName !== this.storage.name)
+    if (storageChanged) {
+      this.storage.close()
+      this.storage = new Storage(options.storageVersion, options.storageName)
+    }
   }
 
   async start(url: string) {

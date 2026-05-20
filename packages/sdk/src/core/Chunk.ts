@@ -125,6 +125,7 @@ class Chunk {
           this.options.action,
           `index=${this.index}${mockError(this.index) ? '&error=1' : ''}`
         ),
+        method: this.options.method,
         data: {
           url: this.url,
           index: this.index,
@@ -134,6 +135,8 @@ class Chunk {
           Range: `bytes=${this.startByte}-${this.endByte}`,
           ...this.options.headers
         },
+        timeout: this.options.timeout,
+        withCredentials: this.options.withCredentials,
         onSuccess,
         onFail,
         onProgress: this.handleProgress

@@ -7,11 +7,10 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link rel="stylesheet" href="//unpkg.com/element-plus/dist/index.css" />
     <script src="//unpkg.com/element-plus"></script>
-    <script src="https://unpkg.com/axios@0.24.0/dist/axios.min.js"></script>
   </head>
   <body>
     <div id="app">
-      <el-form :model="config" ref="form" label-width="130px" :inline="false" size="default">
+      <el-form :model="config" ref="form" label-width="150px" :inline="false" size="default">
         <el-form-item label="下载地址或者标识">
           <el-select v-model="currentUrl" placeholder="请输入地址" clearable filterable allow-create>
             <el-option
@@ -30,6 +29,12 @@
               :value="item"></el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="method">
+          <el-radio-group v-model="config.method">
+            <el-radio value="POST">POST</el-radio>
+            <el-radio value="GET">GET</el-radio>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="isPart">
           <el-radio-group v-model="config.isPart">
             <el-radio :value="true">true</el-radio>
@@ -38,19 +43,16 @@
         </el-form-item>
         <el-form-item label="chunkSize">
           <el-input-number v-model="config.chunkSize" :step="1" controls-position="right" :min="0.1" style="width: 200px;">
-            <template #prefix>
-              <span>1024 * 1024 * </span>
-            </template>
             <template #suffix>
-              <span>M</span>
+              <span>MB</span>
             </template>
           </el-input-number>
         </el-form-item>
         <el-form-item label="threads">
-          <el-input-number v-model="config.threads" :step="1" controls-position="right" :min="0" style="width: 200px;"/>
+          <el-input-number v-model="config.threads" :step="1" controls-position="right" :min="1" :max="20" style="width: 200px;"/>
         </el-form-item>
         <el-form-item label="maxRetries">
-          <el-input-number v-model="config.maxRetries" :step="1" controls-position="right" :min="0" style="width: 200px;"/>
+          <el-input-number v-model="config.maxRetries" :step="1" controls-position="right" :min="0" :max="10" style="width: 200px;"/>
         </el-form-item>
         <el-form-item label="retryInterval">
           <el-input-number v-model="config.retryInterval" :step="100" controls-position="right" :min="0" style="width: 200px;">
@@ -59,21 +61,33 @@
             </template>
           </el-input-number>
         </el-form-item>
+        <el-form-item label="timeout">
+          <el-input-number v-model="config.timeout" :step="1000" controls-position="right" :min="0" style="width: 200px;">
+            <template #suffix>
+              <span>ms (0=不超时)</span>
+            </template>
+          </el-input-number>
+        </el-form-item>
+        <el-form-item label="withCredentials">
+          <el-switch v-model="config.withCredentials" />
+        </el-form-item>
         <el-form-item label="storageVersion">
           <el-input-number v-model="config.storageVersion" :step="1" controls-position="right" :min="1" placeholder="version" style="width: 200px;"/>
         </el-form-item>
         <el-form-item label="storageName">
           <el-input v-model="config.storageName" clearable placeholder="default: file_chunks_db"/>
         </el-form-item>
-        <el-form-item label="data">
-          <el-input v-model="config.data.name" clearable placeholder=""/>
-        </el-form-item>
         <el-form-item label="headers">
-          <el-input v-model="config.headers.authorization" clearable placeholder=""/>
+          <el-input v-model="headersJson" type="textarea" :rows="3" placeholder='{"authorization": "Basic ..."}' />
+          <div v-if="headersError" style="color: #f56c6c; font-size: 12px; margin-top: 4px;">{{ headersError }}</div>
+        </el-form-item>
+        <el-form-item label="data">
+          <el-input v-model="dataJson" type="textarea" :rows="3" placeholder='{"key": "value"}' />
+          <div v-if="dataError" style="color: #f56c6c; font-size: 12px; margin-top: 4px;">{{ dataError }}</div>
         </el-form-item>
       </el-form>
       <el-divider></el-divider>
-      <el-button type="primary" size="default" @click="hanldeDownload">Sharding download</el-button>
+      <el-button type="primary" size="default" @click="handleDownload">Sharding download</el-button>
       <el-divider></el-divider>
       <div>
         <el-image style="width: 150px; height: 150px" :src="link" fit="fill" :lazy="true" :alt="link"></el-image>
@@ -83,14 +97,14 @@
       <div>
         <div v-for="file in downloadFileList" :key="file.id">
           <el-space>
-            <span @click="openFile(file)">{{ file.name }}</span>
-            <span>{{ file.status }}</span>
-            <span style="font-size: 12px;">{{ file.renderLoadedSize }} / {{file.renderSize}}</span>
+            <span @click="openFile(file)" style="cursor: pointer; color: #409eff;">{{ file.name }}</span>
+            <el-tag :type="tagType(file.status)" size="small">{{ file.status }}</el-tag>
+            <span style="font-size: 12px;">{{ file.renderLoadedSize }} / {{ file.renderSize }}</span>
             <el-button v-if="file.status === 'failed'" type="primary" size="small" @click="handleRetry(file)">Retry</el-button>
-            <el-button v-if="file.status === 'downloading'" type="primary" size="small" @click="hanlePause(file)">Pause</el-button>
-            <el-button v-if="file.status === 'cancelled'" type="primary" size="small" @click="hanleResume(file)">Resume</el-button>
+            <el-button v-if="file.status === 'downloading'" type="warning" size="small" @click="handlePause(file)">Pause</el-button>
+            <el-button v-if="file.status === 'cancelled'" type="success" size="small" @click="handleResume(file)">Resume</el-button>
           </el-space>
-          <el-progress :percentage="Number((file.progress * 100).toFixed(0))" :color="() => customColorMethod(file.status)" /> 
+          <el-progress :percentage="Number((file.progress * 100).toFixed(0))" :color="progressColor" />
         </div>
       </div>
     </div>
