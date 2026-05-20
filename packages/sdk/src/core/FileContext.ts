@@ -186,7 +186,7 @@ class FileContext {
       this.changeStatus(FileStatus.DOWNLOADED)
       await this.mergeFilePart()
     } catch (error: any) {
-      if (this.status === FileStatus.CANCELLED && this.isCanceledChunkError(error)) {
+      if (this.isCanceledChunkError(error)) {
         return
       }
       this.changeStatus(FileStatus.FAILED)
@@ -267,7 +267,9 @@ class FileContext {
 
     this.progress = Math.min(1, Math.max(progress, this.progress))
     this.loadedSize = Math.min(this.size, Math.max(loadedSize, this.loadedSize))
-    this.changeStatus(FileStatus.DOWNLOADING)
+    if (this.status !== FileStatus.CANCELLED) {
+      this.changeStatus(FileStatus.DOWNLOADING)
+    }
     this.downloader.emit(Callbacks.PROGRESS, this)
   }
 

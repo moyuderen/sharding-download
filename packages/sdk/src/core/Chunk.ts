@@ -42,6 +42,10 @@ class Chunk {
   public progress: number
   /** 已下载大小 */
   public loaded: number
+  /** send() promise 的 reject，用于 cancel 时主动 reject */
+  private _reject: ((reason?: any) => void) | null
+  /** cancel 标记，防止 cancel 后继续 send */
+  private _canceled: boolean
 
   constructor(index: number, parent: FileContext, options: FileOptions) {
     this.parent = parent
@@ -51,7 +55,7 @@ class Chunk {
     this.url = options.url
     this.fileSize = parent.size
     this.chunkSize = options.chunkSize
-    this.startByte = this.chunkSize * this.index
+    this.startByte = Math.floor(this.chunkSize * this.index)
     this.endByte = Math.min(this.startByte + this.chunkSize - 1, this.fileSize - 1)
     this.size = this.endByte - this.startByte + 1
     this.status = ChunkStatus.READY
@@ -60,6 +64,8 @@ class Chunk {
     this.timer = undefined
     this.progress = 0
     this.loaded = 0
+    this._reject = null
+    this._canceled = false
   }
 
   handleProgress = throttle((e: ProgressEvent) => {
@@ -70,9 +76,13 @@ class Chunk {
   }, 200)
 
   async send(): Promise<Blob> {
+    if (this._canceled) {
+      throw new ChunkCanceledError()
+    }
     this.status = ChunkStatus.PENDING
 
     return new Promise((resolve, reject) => {
+      this._reject = reject
       const onFail = (e: any) => {
         if (this.request && this.request.canceled) {
           reject(new ChunkCanceledError())
@@ -132,6 +142,7 @@ class Chunk {
   }
 
   cancel() {
+    this._canceled = true
     if (this.request) {
       this.request.canceled = true
       this.request.abort()
@@ -140,6 +151,11 @@ class Chunk {
     if (this.timer) {
       clearTimeout(this.timer)
       this.timer = undefined
+    }
+
+    if (this._reject) {
+      this._reject(new ChunkCanceledError())
+      this._reject = null
     }
 
     this.status = ChunkStatus.ERROR
