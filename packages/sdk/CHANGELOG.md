@@ -1,5 +1,11 @@
 # sharding-download
 
+## 1.4.0
+
+### Minor Changes
+
+- 新增 method/timeout/withCredentials/mockErrorChunks 配置项，修复暂停恢复状态错误、chunk 取消、进度计算、事件派发等多项 bug，优化类型安全与健壮性
+
 ## 1.3.0
 
 ### Minor Changes (2025-06-03)
